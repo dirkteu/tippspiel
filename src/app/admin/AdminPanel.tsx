@@ -428,13 +428,15 @@ function AvatarBlock({
     const f = e.target.files?.[0];
     e.target.value = ""; // Reset, damit gleiche Datei nochmal wählbar ist
     if (!f) return;
-    if (f.size > 2 * 1024 * 1024) {
-      alert("Foto zu groß (>2MB) — bitte kleineres Bild auswählen.");
+    if (f.size > 20 * 1024 * 1024) {
+      alert("Foto zu groß (>20MB) — bitte kleineres Bild auswählen.");
       return;
     }
     setBusy(true);
     try {
-      const dataUrl = await readAsDataUrl(f);
+      // Auf max 800×800 verkleinern + als JPEG q=0.85 → ~50–200 KB.
+      // Liegt sicher unter dem Supabase-Bucket-Limit (512 KB).
+      const dataUrl = await downscaleImage(f, 800, 0.85);
       const res = await fetch(`/api/admin/roster/${player.id}/avatar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -447,6 +449,8 @@ function AvatarBlock({
       }
       setVer((v) => v + 1);
       onChange();
+    } catch (err) {
+      alert("Bildverarbeitung fehlgeschlagen: " + (err as Error).message);
     } finally {
       setBusy(false);
     }
@@ -536,6 +540,35 @@ function readAsDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Lädt das Bild, skaliert auf max `maxSize` (längere Seite) und liefert
+ * eine JPEG-data-URL mit der gegebenen Qualität. EXIF-Orientierung wird
+ * von createImageBitmap implizit normalisiert.
+ */
+async function downscaleImage(
+  file: File,
+  maxSize: number,
+  quality: number,
+): Promise<string> {
+  const dataUrl = await readAsDataUrl(file);
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error("Bild nicht lesbar"));
+    i.src = dataUrl;
+  });
+  const ratio = Math.min(1, maxSize / Math.max(img.width, img.height));
+  const w = Math.round(img.width * ratio);
+  const h = Math.round(img.height * ratio);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas-Kontext nicht verfügbar");
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", quality);
 }
 
 // ====================================================== Teams ============

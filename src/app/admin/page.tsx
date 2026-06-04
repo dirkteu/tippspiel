@@ -41,7 +41,7 @@ export default async function AdminPage() {
     sb
       .from("profiles")
       .select(
-        "id,real_name,gender,real_partner_id,invite_code,team_id,joined_at,username",
+        "id,real_name,gender,real_partner_id,invite_code,team_id,joined_at,username,avatar_url",
       )
       .order("real_name", { ascending: true }),
   ]);
