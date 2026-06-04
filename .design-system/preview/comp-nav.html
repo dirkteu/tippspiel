@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  html,body{margin:0}
+  body{background:var(--bg);padding:24px;font-family:var(--font-sans);display:flex;justify-content:center}
+  .nav{width:360px;background:rgba(15,23,42,.82);backdrop-filter:blur(12px);
+    border-top:1px solid var(--border-soft);border-radius:16px;
+    display:flex;justify-content:space-around;padding:10px 8px 8px}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--fg4);flex:1}
+  .tab svg{width:24px;height:24px}
+  .tab span{font-size:10px;font-weight:500;letter-spacing:.02em}
+  .tab.active{color:var(--accent)}
+</style></head>
+<body>
+  <nav class="nav">
+    <div class="tab active"><i data-lucide="house"></i><span>Spieltag</span></div>
+    <div class="tab"><i data-lucide="pencil-line"></i><span>Tipps</span></div>
+    <div class="tab"><i data-lucide="lock"></i><span>Partner</span></div>
+    <div class="tab"><i data-lucide="bar-chart-3"></i><span>Tabelle</span></div>
+    <div class="tab"><i data-lucide="circle-user"></i><span>Profil</span></div>
+  </nav>
+  <script>lucide.createIcons();</script>
+</body></html>

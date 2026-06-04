@@ -1,0 +1,123 @@
+import { Settings, ChevronRight } from "lucide-react";
+import { AppBar } from "@/components/primitives/AppBar";
+import { getSession } from "@/lib/auth";
+import { supabaseService } from "@/lib/supabase/server";
+import { fetchAllMatches, fetchTeamMemberIds, fetchTipsForTeam } from "@/lib/matches";
+import { tilesUnlocked } from "@/lib/tiles";
+
+export default async function ProfilPage() {
+  const session = (await getSession())!;
+  const sb = supabaseService();
+
+  const memberIds = await fetchTeamMemberIds(session.team.id);
+  const [tipsResp, champResp, matches, teamTips] = await Promise.all([
+    sb.from("tips").select("points_earned").eq("profile_id", session.profile.id),
+    sb
+      .from("champion_tips")
+      .select("points_earned")
+      .eq("profile_id", session.profile.id)
+      .maybeSingle(),
+    fetchAllMatches(),
+    fetchTipsForTeam(memberIds),
+  ]);
+
+  const myPoints = (tipsResp.data ?? []).reduce((s, t) => s + t.points_earned, 0)
+    + (champResp.data?.points_earned ?? 0);
+  const volltreffer = (tipsResp.data ?? []).filter((t) => t.points_earned >= 3).length;
+
+  const tilesOpen = tilesUnlocked(
+    { member_profile_ids: memberIds },
+    matches.map((m) => ({ id: m.id, round: m.round, match_date: m.match_date })),
+    teamTips.map((t) => ({
+      match_id: t.match_id,
+      profile_id: t.profile_id,
+      points_earned: t.points_earned,
+    })),
+  );
+
+  // Rang berechnen (über Team)
+  const { data: allProfiles } = await sb.from("profiles").select("id,team_id");
+  const { data: allTips } = await sb.from("tips").select("profile_id,points_earned");
+  const { data: allChamp } = await sb.from("champion_tips").select("profile_id,points_earned");
+  const profToTeam = new Map<string, string>();
+  for (const p of allProfiles ?? []) profToTeam.set(p.id, p.team_id);
+  const byTeam = new Map<string, number>();
+  for (const t of allTips ?? []) {
+    const tid = profToTeam.get(t.profile_id);
+    if (tid) byTeam.set(tid, (byTeam.get(tid) ?? 0) + t.points_earned);
+  }
+  for (const c of allChamp ?? []) {
+    const tid = profToTeam.get(c.profile_id);
+    if (tid) byTeam.set(tid, (byTeam.get(tid) ?? 0) + c.points_earned);
+  }
+  const sorted = [...byTeam.entries()].sort((a, b) => b[1] - a[1]);
+  const rank = sorted.findIndex(([id]) => id === session.team.id) + 1;
+
+  return (
+    <div className="scroll">
+      <AppBar
+        action={
+          <button className="icon-btn" aria-label="Einstellungen">
+            <Settings size={19} />
+          </button>
+        }
+      />
+      <div className="profile-head">
+        <div className="profile-av">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/api/avatar/me"
+            alt=""
+            style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+          />
+        </div>
+        <div className="partner-name" style={{ fontSize: 22 }}>{session.profile.username}</div>
+        <span className="t-small">
+          Team: {session.team.team_name ?? "(unbenannt)"} · {session.profile.gender === "f" ? "Frau" : "Mann"}
+        </span>
+      </div>
+
+      <div className="stats" style={{ marginTop: 8 }}>
+        <div className="stat">
+          <div className="v">{myPoints}</div>
+          <div className="l">Punkte gesamt</div>
+        </div>
+        <div className="stat">
+          <div className="v green">{volltreffer}</div>
+          <div className="l">Volltreffer</div>
+        </div>
+        <div className="stat">
+          <div className="v">{rank ? `#${rank}` : "—"}</div>
+          <div className="l">Team-Rang</div>
+        </div>
+        <div className="stat">
+          <div className="v">{tilesOpen}/9</div>
+          <div className="l">Partner-Kacheln</div>
+        </div>
+      </div>
+
+      <div className="section-head"><span className="kicker">Konto</span></div>
+      <div className="card" style={{ overflow: "hidden" }}>
+        {["Tipp-Regeln", "Abmelden"].map((t, i) => (
+          <div
+            key={t}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "14px 16px",
+              borderTop: i ? "1px solid var(--divider)" : "none",
+              color: "var(--fg2)",
+              fontSize: 15,
+            }}
+          >
+            {t}
+            <span style={{ marginLeft: "auto", color: "var(--fg4)", display: "flex" }}>
+              <ChevronRight size={18} />
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

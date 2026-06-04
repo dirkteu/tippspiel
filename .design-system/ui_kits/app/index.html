@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secret Squad — App UI Kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="app.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="22" fill="#0f172a"/>
+    <path d="M50 28 L66 34 V50 C66 60 59 67 50 71 C41 67 34 60 34 50 V34 Z" fill="#059669"/>
+    <path d="M50 28 L66 34 V50 C66 60 59 67 50 71 V28 Z" fill="#047857"/>
+    <circle cx="50" cy="49" r="6" fill="#f8fafc"/>
+  </svg>
+</template>
+<div id="root"></div>
+
+<script type="text/babel" src="Primitives.jsx"></script>
+<script type="text/babel" src="Screens.jsx"></script>
+<script type="text/babel" src="Onboarding.jsx"></script>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const MATCHES = [
+  { id: "m1", group: "Gruppe A", date: "11. Juni", time: "21:00", live: null,
+    home: { name: "Mexiko", flag: "🇲🇽" }, away: { name: "Deutschland", flag: "🇩🇪" } },
+  { id: "m2", group: "Gruppe B", date: "12. Juni", time: "18:00", live: null,
+    home: { name: "Argentinien", flag: "🇦🇷" }, away: { name: "Frankreich", flag: "🇫🇷" } },
+  { id: "m3", group: "Gruppe C", date: "12. Juni", time: "21:00", live: null,
+    home: { name: "Brasilien", flag: "🇧🇷" }, away: { name: "USA", flag: "🇺🇸" } },
+  { id: "m4", group: "Gruppe D", date: "13. Juni", time: "18:00", live: null,
+    home: { name: "Spanien", flag: "🇪🇸" }, away: { name: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" } },
+];
+
+const LEADERBOARD = [
+  { name: "Lena", av: "🦊", hits: 9, pts: 142 },
+  { name: "Jonas", av: "🐺", hits: 7, pts: 128 },
+  { name: "Du", av: "⚡", hits: 6, pts: 119, me: true },
+  { name: "Mara", av: "🦉", hits: 5, pts: 104 },
+  { name: "Tim", av: "🐢", hits: 4, pts: 91 },
+];
+
+const PARTNER = { name: "Mara", emoji: "🧑‍🦰" };
+
+function App() {
+  const [stage, setStage] = useState("welcome"); // welcome | join | app
+  const [tab, setTab] = useState("spieltag");
+  const [tips, setTips] = useState(() => {
+    const o = {};
+    MATCHES.forEach((m, i) => { o[m.id] = { h: i === 0 ? 2 : 1, a: i === 0 ? 1 : 1, saved: i === 0 }; });
+    return o;
+  });
+  const [open, setOpen] = useState([true, false, true, false, true, false, true, false, false]);
+  const [toast, setToast] = useState(false);
+
+  // Convert any freshly-rendered <i data-lucide> into inline SVGs.
+  useEffect(() => { window.refreshIcons && window.refreshIcons(); });
+
+  const setTip = (id, t) => setTips((p) => ({ ...p, [id]: { ...t, saved: false } }));
+  const saveAll = () => {
+    setTips((p) => {
+      const n = {}; Object.keys(p).forEach((k) => (n[k] = { ...p[k], saved: true })); return n;
+    });
+    setToast(true); setTimeout(() => setToast(false), 1900);
+  };
+  const toggleTile = (i) => setOpen((p) => p.map((v, idx) => (idx === i ? !v : v)));
+
+  const showSaveBar = stage === "app" && tab === "tipps";
+
+  if (stage !== "app") {
+    return (
+      <div className="phone">
+        <div className="notch"></div>
+        <StatusBar />
+        <div className="screen">
+          {stage === "welcome" && <WelcomeScreen onNext={() => setStage("join")} />}
+          {stage === "join" && <JoinScreen onJoin={() => setStage("app")} onBack={() => setStage("welcome")} />}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="phone">
+      <div className="notch"></div>
+      <StatusBar />
+      <div className="screen">
+        {tab === "spieltag" && <SpieltagScreen matches={MATCHES} tips={tips} setTip={setTip} onGoTipps={() => setTab("tipps")} />}
+        {tab === "tipps" && <TippsScreen matches={MATCHES} tips={tips} setTip={setTip} />}
+        {tab === "partner" && <PartnerScreen open={open} toggle={toggleTile} partner={PARTNER} />}
+        {tab === "tabelle" && <TabelleScreen rows={LEADERBOARD} />}
+        {tab === "profil" && <ProfilScreen />}
+      </div>
+
+      {showSaveBar && (
+        <div className="savebar">
+          <div className="wrap"><Button variant="primary" onClick={saveAll}>Tipps speichern</Button></div>
+        </div>
+      )}
+
+      <Toast show={toast}>Tipps gespeichert</Toast>
+      <BottomNav active={tab} onChange={setTab} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

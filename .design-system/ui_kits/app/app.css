@@ -1,0 +1,143 @@
+/* Secret Squad — app UI kit styles. Built on ../../colors_and_type.css tokens. */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:#05080f;
+  font-family:var(--font-sans);
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+
+/* ---- Phone frame (iPhone 14/15 Pro 393×852) ---- */
+.phone{
+  width:393px;height:852px;position:relative;
+  background:var(--bg);
+  border-radius:46px;
+  border:1px solid #232b3a;
+  box-shadow:0 0 0 10px #0a0f1a, 0 40px 90px rgba(0,0,0,.7);
+  overflow:hidden;
+}
+.notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:118px;height:30px;background:#000;border-radius:999px;z-index:60}
+.statusbar{position:absolute;top:0;left:0;right:0;height:50px;display:flex;
+  align-items:center;justify-content:space-between;padding:0 26px;z-index:55;
+  font-size:13px;font-weight:600;color:var(--fg1);font-variant-numeric:tabular-nums}
+.statusbar .right{display:flex;gap:6px;align-items:center}
+.statusbar svg{width:16px;height:16px}
+
+/* ---- Screen scaffold ---- */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:50px}
+.scroll{flex:1;overflow-y:auto;padding:0 16px 120px;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{width:0}
+
+.appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px 14px;background:linear-gradient(180deg,var(--bg) 70%,transparent);}
+.appbar .brand{display:flex;align-items:center;gap:9px}
+.brand-badge{width:30px;height:30px;border-radius:9px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--glow-green)}
+.brand-badge svg{width:17px;height:17px;color:#fff}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:-.02em;color:var(--fg1)}
+.brand-name em{font-style:normal;color:var(--green-500)}
+.icon-btn{width:38px;height:38px;border-radius:11px;background:var(--surface);border:1px solid var(--border-soft);
+  display:flex;align-items:center;justify-content:center;color:var(--fg2);cursor:pointer}
+.icon-btn svg{width:19px;height:19px}
+
+.kicker{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--fg3)}
+.h1{font-family:var(--font-display);font-weight:700;font-size:26px;letter-spacing:-.02em;color:var(--fg1);margin:0}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 12px}
+
+/* ---- Card ---- */
+.card{background:var(--surface);border-radius:16px;border:1px solid var(--border-soft);
+  box-shadow:var(--shadow-card)}
+.card.pad{padding:16px}
+
+/* ---- Match card ---- */
+.match{padding:16px;margin-bottom:10px}
+.match .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.match .meta{font-size:11px;color:var(--fg4);font-weight:500}
+.badge-live{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--green-400)}
+.live-dot{width:7px;height:7px;border-radius:999px;background:var(--green-500);box-shadow:0 0 0 4px var(--green-tint);animation:pulse 1.8s var(--ease) infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.45)}50%{box-shadow:0 0 0 6px rgba(16,185,129,0)}}
+.teams{display:flex;align-items:flex-start;justify-content:space-between}
+.team{display:flex;flex-direction:column;align-items:center;gap:7px;width:80px}
+.flag{font-size:36px;line-height:1;font-family:var(--font-flag)}
+.tn{font-size:13px;color:var(--fg2);font-weight:500;text-align:center}
+.stepper{display:flex;align-items:center;gap:9px}
+.num{font-family:var(--font-display);font-weight:700;font-size:38px;color:var(--fg1);font-variant-numeric:tabular-nums;width:30px;text-align:center}
+.colon{font-family:var(--font-display);font-size:26px;color:var(--fg4);margin-top:4px}
+.pm{display:flex;flex-direction:column;gap:6px}
+.pm button{width:30px;height:24px;border-radius:7px;background:var(--surface-2);color:var(--fg1);border:0;font-size:16px;line-height:1;cursor:pointer;transition:transform var(--dur-fast),background var(--dur-fast)}
+.pm button:active{transform:scale(.9);background:var(--slate-600)}
+.match.saved{outline:1px solid rgba(5,150,105,.35)}
+.tip-flag{margin-top:12px;display:flex;align-items:center;gap:7px;font-size:12px;color:var(--green-400);font-weight:500}
+.tip-flag svg{width:15px;height:15px}
+
+/* ---- Buttons ---- */
+.btn{font-family:var(--font-sans);font-weight:500;font-size:16px;border:0;border-radius:12px;
+  padding:15px 20px;cursor:pointer;transition:transform var(--dur-fast),background var(--dur-fast);width:100%}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:var(--on-accent);box-shadow:var(--glow-green)}
+.btn-primary:active{background:var(--accent-press)}
+.btn-secondary{background:var(--surface-2);color:var(--fg1)}
+.btn-ghost{background:transparent;color:var(--fg2);border:1px solid var(--border)}
+
+.savebar{position:absolute;left:0;right:0;bottom:84px;padding:0 16px;z-index:45}
+.savebar .wrap{background:linear-gradient(0deg,var(--bg) 60%,transparent);padding-top:18px;padding-bottom:6px}
+
+/* ---- Bottom nav ---- */
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:84px;z-index:50;
+  background:rgba(15,23,42,.82);backdrop-filter:blur(14px);
+  border-top:1px solid var(--border-soft);
+  display:flex;justify-content:space-around;padding:10px 6px 0}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--fg4);flex:1;cursor:pointer;
+  background:none;border:0;transition:color var(--dur-fast)}
+.tab svg{width:24px;height:24px}
+.tab span{font-size:10px;font-weight:500}
+.tab.active{color:var(--accent)}
+
+/* ---- Secret partner grid ---- */
+.partner-card{padding:18px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.grid3{position:relative;width:240px;height:240px;border-radius:14px;overflow:hidden}
+.grid3 .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  background:linear-gradient(135deg,#1f6f4a,#0b3a26);display:flex;align-items:center;justify-content:center;font-size:120px}
+.grid3 .tiles{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px}
+.tile{background:var(--tile);cursor:pointer;transition:opacity var(--dur-slow) var(--ease-out),transform var(--dur-slow) var(--ease-out);
+  display:flex;align-items:center;justify-content:center;color:var(--fg4)}
+.tile svg{width:18px;height:18px;opacity:.5}
+.tile.open{opacity:0;transform:scale(.55);pointer-events:none}
+.progress{width:100%;height:6px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width var(--dur-slow) var(--ease-out)}
+.partner-name{font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--fg1)}
+
+/* ---- Leaderboard ---- */
+.lb{display:flex;flex-direction:column;gap:6px}
+.lb-row{display:flex;align-items:center;gap:13px;background:var(--surface);border-radius:12px;padding:12px 14px;border:1px solid var(--border-soft)}
+.lb-row.me{border-color:rgba(5,150,105,.45);background:var(--green-tint)}
+.lb-rank{font-family:var(--font-display);font-weight:700;font-size:17px;width:24px;color:var(--fg3);font-variant-numeric:tabular-nums;text-align:center}
+.lb-rank.gold{color:var(--gold)}
+.lb-rank.silver{color:#cbd5e1}.lb-rank.bronze{color:#d6a06a}
+.lb-av{width:36px;height:36px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:18px}
+.lb-name{font-weight:500;color:var(--fg1);font-size:15px}
+.lb-sub{font-size:12px;color:var(--fg4)}
+.lb-pts{margin-left:auto;font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--fg1);font-variant-numeric:tabular-nums}
+.lb-pts small{font-size:11px;color:var(--fg4);font-weight:400}
+
+/* ---- Stat tiles (profile) ---- */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;padding:16px}
+.stat .v{font-family:var(--font-display);font-weight:700;font-size:30px;color:var(--fg1);font-variant-numeric:tabular-nums}
+.stat .v.green{color:var(--green-400)}
+.stat .l{font-size:12px;color:var(--fg3);margin-top:2px}
+
+/* ---- Toast ---- */
+.toast{position:absolute;left:50%;bottom:180px;transform:translateX(-50%) translateY(20px);
+  background:var(--green-700);color:#fff;padding:12px 20px;border-radius:999px;font-size:14px;font-weight:500;
+  display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;
+  transition:opacity var(--dur) var(--ease-out),transform var(--dur) var(--ease-out);z-index:80}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast svg{width:17px;height:17px}
+
+.profile-head{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 0 8px}
+.profile-av{width:76px;height:76px;border-radius:999px;background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:38px}

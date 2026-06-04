@@ -1,0 +1,41 @@
+/**
+ * Statische Liste der WM-2026-Teilnehmer (48 Teams).
+ * Stand: Auslosung — Admin kann ggf. nachpflegen.
+ * Verwendet im Weltmeister-Picker.
+ */
+export const WM2026_TEAMS: { name: string; flag: string }[] = [
+  { name: "Argentinien", flag: "🇦🇷" },
+  { name: "Australien", flag: "🇦🇺" },
+  { name: "Belgien", flag: "🇧🇪" },
+  { name: "Curaçao", flag: "🇨🇼" },
+  { name: "Elfenbeinküste", flag: "🇨🇮" },
+  { name: "Brasilien", flag: "🇧🇷" },
+  { name: "Dänemark", flag: "🇩🇰" },
+  { name: "Deutschland", flag: "🇩🇪" },
+  { name: "Ecuador", flag: "🇪🇨" },
+  { name: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+  { name: "Frankreich", flag: "🇫🇷" },
+  { name: "Italien", flag: "🇮🇹" },
+  { name: "Iran", flag: "🇮🇷" },
+  { name: "Japan", flag: "🇯🇵" },
+  { name: "Kanada", flag: "🇨🇦" },
+  { name: "Kolumbien", flag: "🇨🇴" },
+  { name: "Kroatien", flag: "🇭🇷" },
+  { name: "Marokko", flag: "🇲🇦" },
+  { name: "Mexiko", flag: "🇲🇽" },
+  { name: "Niederlande", flag: "🇳🇱" },
+  { name: "Norwegen", flag: "🇳🇴" },
+  { name: "Österreich", flag: "🇦🇹" },
+  { name: "Polen", flag: "🇵🇱" },
+  { name: "Portugal", flag: "🇵🇹" },
+  { name: "Schottland", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
+  { name: "Schweiz", flag: "🇨🇭" },
+  { name: "Senegal", flag: "🇸🇳" },
+  { name: "Serbien", flag: "🇷🇸" },
+  { name: "Spanien", flag: "🇪🇸" },
+  { name: "Südkorea", flag: "🇰🇷" },
+  { name: "Tschechien", flag: "🇨🇿" },
+  { name: "Türkei", flag: "🇹🇷" },
+  { name: "Uruguay", flag: "🇺🇾" },
+  { name: "USA", flag: "🇺🇸" },
+];

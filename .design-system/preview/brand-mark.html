@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0}
+  body{background:var(--bg);padding:24px;font-family:var(--font-display);display:flex;flex-direction:column;gap:20px;align-items:flex-start}
+  .lockup{display:flex;align-items:center;gap:12px}
+  .badge{width:40px;height:40px;border-radius:11px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:var(--glow-green)}
+  .badge svg{width:22px;height:22px;color:#fff}
+  .wordmark{font-family:var(--font-display);font-weight:700;font-size:28px;letter-spacing:-.02em;color:var(--fg1);white-space:nowrap}
+  .wordmark em{font-style:normal;color:var(--green-500)}
+  .small{font-size:16px}
+  .small .badge{width:28px;height:28px;border-radius:8px}
+  .small .badge svg{width:16px;height:16px}
+</style>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+  <div class="lockup">
+    <div class="badge"><i data-lucide="shield-half"></i></div>
+    <span class="wordmark">SECRET <em>SQUAD</em></span>
+  </div>
+  <div class="lockup small">
+    <div class="badge"><i data-lucide="shield-half"></i></div>
+    <span class="wordmark small">SECRET <em>SQUAD</em></span>
+  </div>
+  <script>lucide.createIcons();</script>
+</body></html>

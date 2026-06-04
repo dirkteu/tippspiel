@@ -1,0 +1,133 @@
+"use client";
+import { useEffect, useState } from "react";
+import { Check, Lock } from "lucide-react";
+
+export interface MatchInfo {
+  id: string;
+  round_label: string; // z.B. "Gruppe A · 11. Juni"
+  kickoff: string; // ISO
+  team_1: string;
+  team_2: string;
+  flag_1?: string | null;
+  flag_2?: string | null;
+  stadium?: string | null;
+  locked: boolean;
+}
+
+export interface TipState {
+  tip_1: number;
+  tip_2: number;
+  saved: boolean;
+  points?: number | null;
+}
+
+interface Props {
+  match: MatchInfo;
+  tip: TipState | null;
+  onChange?: (t: { tip_1: number; tip_2: number }) => void;
+}
+
+export function MatchCard({ match, tip, onChange }: Props) {
+  const t = tip ?? { tip_1: 0, tip_2: 0, saved: false };
+  const disabled = match.locked || !onChange;
+
+  return (
+    <div className={`card match${t.saved ? " saved" : ""}`}>
+      <div className="top">
+        <span className="meta">{match.round_label}</span>
+        {match.locked ? (
+          <span className="locked-pill">
+            <Lock size={11} /> gesperrt
+          </span>
+        ) : (
+          <Countdown kickoff={match.kickoff} />
+        )}
+      </div>
+      <div className="teams">
+        <div className="team">
+          <span className="flag">{match.flag_1 ?? "🏳️"}</span>
+          <span className="tn">{match.team_1}</span>
+        </div>
+        <div className="stepper">
+          <div className="pm">
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange?.({ tip_1: t.tip_1 + 1, tip_2: t.tip_2 })}
+              aria-label="plus Heim"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange?.({ tip_1: Math.max(0, t.tip_1 - 1), tip_2: t.tip_2 })}
+              aria-label="minus Heim"
+            >
+              −
+            </button>
+          </div>
+          <span className="num">{t.tip_1}</span>
+          <span className="colon">:</span>
+          <span className="num">{t.tip_2}</span>
+          <div className="pm">
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange?.({ tip_1: t.tip_1, tip_2: t.tip_2 + 1 })}
+              aria-label="plus Auswärts"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange?.({ tip_1: t.tip_1, tip_2: Math.max(0, t.tip_2 - 1) })}
+              aria-label="minus Auswärts"
+            >
+              −
+            </button>
+          </div>
+        </div>
+        <div className="team">
+          <span className="flag">{match.flag_2 ?? "🏳️"}</span>
+          <span className="tn">{match.team_2}</span>
+        </div>
+      </div>
+      {match.stadium && (
+        <div className="lb-sub" style={{ marginTop: 10, textAlign: "center", fontSize: 11 }}>
+          📍 {match.stadium}
+        </div>
+      )}
+      {t.saved && (
+        <div className="tip-flag">
+          <Check size={15} />
+          {typeof t.points === "number" ? `Gewertet · ${t.points} Pkt` : "Tipp gespeichert"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Countdown({ kickoff }: { kickoff: string }) {
+  const [text, setText] = useState<string>("");
+  useEffect(() => {
+    function tick() {
+      const lock = new Date(kickoff).getTime() - 5 * 60_000;
+      const diff = lock - Date.now();
+      if (diff <= 0) {
+        setText("gleich gesperrt");
+        return;
+      }
+      const h = Math.floor(diff / 3_600_000);
+      const m = Math.floor((diff % 3_600_000) / 60_000);
+      if (h > 24) setText(`in ${Math.floor(h / 24)} T`);
+      else if (h > 0) setText(`in ${h}h ${m}m`);
+      else setText(`in ${m} Min`);
+    }
+    tick();
+    const i = setInterval(tick, 30_000);
+    return () => clearInterval(i);
+  }, [kickoff]);
+  return <span className="countdown-pill">{text}</span>;
+}

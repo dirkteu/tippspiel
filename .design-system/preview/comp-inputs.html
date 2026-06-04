@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0}
+  body{background:var(--bg);padding:24px;font-family:var(--font-sans)}
+  .stack{display:flex;flex-direction:column;gap:16px;max-width:360px}
+  .field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--fg3);margin-bottom:8px}
+  .input{width:100%;box-sizing:border-box;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;
+    padding:12px 14px;color:var(--fg1);font-family:var(--font-sans);font-size:15px}
+  .input::placeholder{color:var(--fg4)}
+  .input.focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--green-tint)}
+  .chips{display:flex;gap:8px}
+  .chip{padding:8px 16px;border-radius:999px;background:var(--surface);color:var(--fg2);font-size:14px;border:1px solid var(--border-soft)}
+  .chip.on{background:var(--green-tint);color:var(--green-400);border-color:rgba(5,150,105,.4)}
+</style></head>
+<body>
+  <div class="stack">
+    <div class="field"><label>Squad-Name</label><input class="input focus" value="Büro-Kicker 2026"></div>
+    <div class="field"><label>Einladungscode</label><input class="input" placeholder="z. B. WM26-XYZ"></div>
+    <div class="field"><label>Tipp-Modus</label>
+      <div class="chips"><span class="chip on">Ergebnis</span><span class="chip">Tendenz</span><span class="chip">Toto</span></div>
+    </div>
+  </div>
+</body></html>

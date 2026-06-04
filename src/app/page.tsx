@@ -1,66 +1,84 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { ShieldHalf, Lock } from "lucide-react";
+import { getSession } from "@/lib/auth";
 
-export default function Home() {
+export default async function WelcomePage() {
+  const session = await getSession();
+  if (session) redirect("/spieltag");
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="shell">
+      <div className="screen">
+        <div
+          className="scroll"
+          style={{ display: "flex", flexDirection: "column", padding: "0 24px 40px" }}
+        >
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 22,
+              textAlign: "center",
+              minHeight: "70vh",
+            }}
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div
+              className="brand-badge"
+              style={{ width: 64, height: 64, borderRadius: 18 }}
+            >
+              <ShieldHalf size={34} color="#fff" />
+            </div>
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 700,
+                  fontSize: 34,
+                  letterSpacing: "-.02em",
+                  color: "var(--fg1)",
+                }}
+              >
+                SECRET <span style={{ color: "var(--green-500)" }}>SQUAD</span>
+              </div>
+              <p className="t-body" style={{ marginTop: 10, maxWidth: 280 }}>
+                Tippe die WM 2026 mit deinem geheimen Partner. Jeder Volltreffer
+                deckt eine Kachel auf — wer steckt dahinter?
+              </p>
+            </div>
+
+            <div className="grid3" style={{ width: 180, height: 180, marginTop: 4 }}>
+              <div
+                className="photo"
+                style={{ fontSize: 90, display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                ⚽
+              </div>
+              <div className="tiles">
+                {[1, 0, 1, 0, 1, 1, 0, 1, 0].map((v, i) => (
+                  <div key={i} className={`tile${v ? "" : " open"}`}>
+                    <Lock size={18} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="t-small" style={{ maxWidth: 280, marginTop: 8 }}>
+              Du brauchst einen WhatsApp-Link von deinem Squad-Admin, um
+              loszulegen.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Link href="/admin" className="btn btn-ghost" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
+              Admin-Bereich
+            </Link>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

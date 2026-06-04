@@ -1,0 +1,237 @@
+/* ============================================================================
+   SECRET SQUAD — WM 2026 Tippspiel
+   colors_and_type.css — Foundational color + type tokens
+   ----------------------------------------------------------------------------
+   Source of truth: uploads/figma_design_blueprint.pdf
+   Base palette is Tailwind "slate" (neutrals) + a single "Stadiongrün"
+   emerald accent. Dark-theme-first, mobile-first (iPhone 14/15 Pro 393×852).
+   ============================================================================ */
+
+/* ---- Webfonts ----------------------------------------------------------------
+   Roboto + Oswald werden via next/font/google in app/layout.tsx geladen und
+   stellen die CSS-Variablen --font-roboto und --font-oswald bereit.
+   Twemoji Country Flags polyfillt Flag-Emojis auf Windows/Chrome.
+----------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Twemoji Country Flags';
+  unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0061-E007F;
+  src: url('https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1.8/dist/TwemojiCountryFlags.woff2') format('woff2');
+  font-display: swap;
+}
+
+:root {
+  /* ======================================================================
+     COLOR — NEUTRALS (Slate)
+     The structural backbone. "Edle, einfache Struktur" comes from these.
+     Cool blue-slate per the original blueprint (user-confirmed).
+     ====================================================================== */
+  --slate-950: #020617;
+  --slate-900: #0f172a;  /* App background "Anthrazit" */
+  --slate-850: #182234;  /* Between 800/900 — elevated panels / sheets */
+  --slate-800: #1e293b;  /* Cards & sections "Surface" */
+  --slate-700: #334155;  /* Hairline borders on dark, pressed surfaces */
+  --slate-600: #475569;  /* 3×3 tile fill, disabled fills */
+  --slate-500: #64748b;  /* Tertiary text, inactive icons */
+  --slate-400: #94a3b8;  /* Muted grey — sublines & labels */
+  --slate-300: #cbd5e1;  /* Secondary text on dark */
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+  --slate-50:  #f8fafc;  /* "Kreideweiß" — titles & core text */
+
+  /* ======================================================================
+     COLOR — PRIMARY (Stadiongrün / Emerald)
+     USE SPARINGLY. Reserved for: primary CTA ("Tipps speichern"),
+     the active nav tab, live indicators, and correct-result states.
+     Too much green destroys the elegant, minimal structure.
+     ====================================================================== */
+  --green-700: #047857;  /* Pressed / active primary */
+  --green-600: #059669;  /* Stadiongrün — primary accent */
+  --green-500: #10b981;  /* Hover / glow / live dot */
+  --green-400: #34d399;  /* Highlight on dark, success text */
+  --green-tint: rgba(5, 150, 105, 0.12);  /* Soft fill behind green elements */
+
+  /* ======================================================================
+     COLOR — SEMANTIC / FEEDBACK
+     Muted, single-hue. Match the slate restraint — no neon.
+     ====================================================================== */
+  --win:    #10b981;  /* Correct tip / win */
+  --draw:   #f59e0b;  /* Amber — partial points / pending */
+  --loss:   #f43f5e;  /* Rose — wrong tip / live-out */
+  --info:   #38bdf8;  /* Sky — info, links */
+  --gold:   #fbbf24;  /* Rank #1 / podium */
+
+  /* ======================================================================
+     COLOR — ROLE TOKENS (use these in components)
+     ====================================================================== */
+  --bg:            var(--slate-900);
+  --bg-elevated:   #1c2840;
+  --surface:       #243047;  /* Card surface — lifted off the bg for clearer contrast */
+  --surface-2:     #38465f;  /* Steppers, secondary buttons */
+  --tile:          var(--slate-600);
+
+  --fg1:           var(--slate-50);   /* Primary text */
+  --fg2:           var(--slate-300);  /* Secondary text */
+  --fg3:           var(--slate-400);  /* Muted labels, sublines */
+  --fg4:           var(--slate-500);  /* Disabled, placeholder */
+
+  --accent:        var(--green-600);
+  --accent-hover:  var(--green-500);
+  --accent-press:  var(--green-700);
+  --on-accent:     var(--slate-50);
+
+  --border:        var(--slate-700);
+  --border-soft:   rgba(148, 163, 184, 0.14);
+  --divider:       rgba(148, 163, 184, 0.10);
+
+  /* ======================================================================
+     ELEVATION — SHADOWS
+     On near-black backgrounds shadows read as soft depth + a top sheen.
+     ====================================================================== */
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg:  0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 24px rgba(0,0,0,0.40);
+  --glow-green: 0 0 0 1px rgba(16,185,129,0.30), 0 8px 24px rgba(5,150,105,0.25);
+
+  /* ======================================================================
+     RADII
+     8px is the system base (per blueprint tile spec). Cards use 12–16px.
+     ====================================================================== */
+  --r-xs:  4px;
+  --r-sm:  8px;   /* Tiles, chips, inputs */
+  --r-md:  12px;  /* Buttons */
+  --r-lg:  16px;  /* Cards & sections */
+  --r-xl:  24px;  /* Sheets, large panels */
+  --r-full: 999px;
+
+  /* ======================================================================
+     SPACING — 4px base grid (Figma columns: 16px margin / 12px gutter)
+     ====================================================================== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;   /* gutter */
+  --space-4: 16px;   /* frame margin */
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --frame-margin: 16px;
+  --frame-gutter: 12px;
+
+  /* ======================================================================
+     MOTION
+     Tile reveals are gentle (300–500ms). Everything ease-out.
+     ====================================================================== */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur: 300ms;     /* default — tile reveal floor */
+  --dur-slow: 500ms; /* tile reveal ceiling */
+
+  /* ======================================================================
+     TYPOGRAPHY — FAMILIES
+     ====================================================================== */
+  --font-sans: var(--font-roboto), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-oswald), 'Roboto Condensed', var(--font-roboto), system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', ui-monospace, 'SF Mono', monospace;
+  /* Prepend the flag font so country emoji render as flags on every platform. */
+  --font-flag: 'Twemoji Country Flags', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+
+  /* TYPE SCALE (mobile-first) */
+  --text-xs:   14px;
+  --text-sm:   15px;
+  --text-base: 16px;
+  --text-lg:   18px;
+  --text-xl:   20px;
+  --text-2xl:  24px;
+  --text-3xl:  30px;
+  --text-4xl:  36px;
+  --text-5xl:  48px;  /* Big score numerals */
+
+  --leading-tight: 1.1;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.04em;
+  --tracking-caps: 0.08em;  /* Uppercase labels / kicker */
+}
+
+/* ============================================================================
+   SEMANTIC TYPE CLASSES
+   Apply directly, or copy the rules into component styles.
+   ============================================================================ */
+.t-display {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg1);
+}
+.t-score {
+  font-family: var(--font-display);
+  font-size: var(--text-5xl);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg1);
+}
+.t-h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg1);
+}
+.t-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+  color: var(--fg1);
+}
+.t-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  line-height: var(--leading-snug);
+  color: var(--fg1);
+}
+.t-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: 400;
+  line-height: var(--leading-normal);
+  color: var(--fg2);
+}
+.t-small {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  line-height: var(--leading-normal);
+  color: var(--fg3);
+}
+.t-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--fg3);
+}
+.t-kicker {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--fg3);
+}
+.t-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  color: var(--fg2);
+}

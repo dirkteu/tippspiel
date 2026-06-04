@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0}
+  body{background:var(--bg);padding:24px;font-family:var(--font-sans)}
+  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .btn{font-family:var(--font-sans);font-weight:500;font-size:15px;border:0;border-radius:12px;padding:12px 20px;cursor:pointer}
+  .primary{background:var(--accent);color:var(--on-accent);box-shadow:var(--glow-green)}
+  .primary.press{background:var(--accent-press);transform:scale(.97);box-shadow:none}
+  .secondary{background:var(--surface-2);color:var(--fg1)}
+  .ghost{background:transparent;color:var(--fg2);border:1px solid var(--border)}
+  .disabled{background:var(--surface);color:var(--fg4);cursor:not-allowed}
+  .lbl{font-family:var(--font-mono);font-size:10px;color:var(--fg4);text-align:center;margin-top:6px}
+  .cell{display:flex;flex-direction:column;align-items:center}
+</style></head>
+<body>
+  <div class="row">
+    <div class="cell"><button class="btn primary">Tipps speichern</button><div class="lbl">primary</div></div>
+    <div class="cell"><button class="btn primary press">Tipps speichern</button><div class="lbl">pressed</div></div>
+    <div class="cell"><button class="btn secondary">Squad ansehen</button><div class="lbl">secondary</div></div>
+    <div class="cell"><button class="btn ghost">Abbrechen</button><div class="lbl">ghost</div></div>
+    <div class="cell"><button class="btn disabled">Gesperrt</button><div class="lbl">disabled</div></div>
+  </div>
+</body></html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0}
+  body{background:var(--bg);padding:24px;font-family:var(--font-sans)}
+  .ramp{display:flex;gap:8px}
+  .sw{flex:1;height:72px;border-radius:10px;display:flex;flex-direction:column;justify-content:flex-end;padding:8px;box-sizing:border-box}
+  .sw b{font-family:var(--font-mono);font-size:11px;color:#fff}
+  .sw small{font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,.7)}
+  .note{margin-top:14px;font-size:12px;color:var(--fg3);display:flex;gap:8px;align-items:flex-start}
+  .dot{width:8px;height:8px;border-radius:999px;background:var(--green-500);margin-top:5px;flex:none;box-shadow:0 0 0 4px var(--green-tint)}
+</style></head>
+<body>
+  <div class="ramp">
+    <div class="sw" style="background:#047857"><b>700</b><small>#047857</small></div>
+    <div class="sw" style="background:#059669;box-shadow:var(--glow-green)"><b>600</b><small>#059669</small></div>
+    <div class="sw" style="background:#10b981"><b>500</b><small>#10b981</small></div>
+    <div class="sw" style="background:#34d399"><b style="color:#052e16">400</b><small style="color:rgba(5,46,22,.7)">#34d399</small></div>
+  </div>
+  <div class="note"><span class="dot"></span><span><b style="color:var(--fg2)">Stadiongrün — sparsam einsetzen.</b> Nur für primäre CTA („Tipps speichern"), aktiven Nav-Tab, Live & korrekte Ergebnisse.</span></div>
+</body></html>

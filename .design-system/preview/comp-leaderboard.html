@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0}
+  body{background:var(--bg);padding:24px;font-family:var(--font-sans);display:flex;justify-content:center}
+  .list{width:360px;display:flex;flex-direction:column;gap:6px}
+  .row{display:flex;align-items:center;gap:14px;background:var(--surface);border-radius:12px;padding:12px 14px}
+  .row.me{border:1px solid rgba(5,150,105,.4);background:var(--green-tint)}
+  .rank{font-family:var(--font-display);font-weight:700;font-size:18px;width:28px;color:var(--fg3);font-variant-numeric:tabular-nums}
+  .rank.gold{color:var(--gold)}
+  .av{width:34px;height:34px;border-radius:999px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:16px}
+  .nm{font-weight:500;color:var(--fg1);font-size:15px}
+  .sub{font-size:12px;color:var(--fg4)}
+  .pts{margin-left:auto;font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--fg1);font-variant-numeric:tabular-nums}
+  .pts small{font-size:11px;color:var(--fg4);font-weight:400}
+</style></head>
+<body>
+  <div class="list">
+    <div class="row"><span class="rank gold">1</span><span class="av">🦊</span><div><div class="nm">Lena</div><div class="sub">9 Volltreffer</div></div><span class="pts">142<small> Pkt</small></span></div>
+    <div class="row"><span class="rank">2</span><span class="av">🐺</span><div><div class="nm">Jonas</div><div class="sub">7 Volltreffer</div></div><span class="pts">128<small> Pkt</small></span></div>
+    <div class="row me"><span class="rank">3</span><span class="av">⚡</span><div><div class="nm">Du</div><div class="sub">6 Volltreffer</div></div><span class="pts">119<small> Pkt</small></span></div>
+  </div>
+</body></html>

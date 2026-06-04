@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0}
+  body{background:var(--bg);padding:28px;font-family:var(--font-sans)}
+  .grid{display:flex;gap:22px}
+  .item{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .box{width:100%;height:64px;border-radius:14px;background:var(--surface)}
+  .nm{font-family:var(--font-mono);font-size:11px;color:var(--fg3)}
+</style></head>
+<body>
+  <div class="grid">
+    <div class="item"><div class="box" style="box-shadow:var(--shadow-sm)"></div><span class="nm">shadow-sm</span></div>
+    <div class="item"><div class="box" style="box-shadow:var(--shadow-md)"></div><span class="nm">shadow-md</span></div>
+    <div class="item"><div class="box" style="box-shadow:var(--shadow-lg)"></div><span class="nm">shadow-lg</span></div>
+    <div class="item"><div class="box" style="box-shadow:var(--glow-green);background:var(--accent)"></div><span class="nm">glow-green</span></div>
+  </div>
+</body></html>
