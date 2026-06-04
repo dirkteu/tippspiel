@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Check, Lock } from "lucide-react";
+import { Check, Lock, Pencil } from "lucide-react";
 
 export interface MatchInfo {
   id: string;
@@ -25,14 +25,23 @@ interface Props {
   match: MatchInfo;
   tip: TipState | null;
   onChange?: (t: { tip_1: number; tip_2: number }) => void;
+  /**
+   * Wird gerufen, wenn der User auf "Bearbeiten" tippt (nur sichtbar, wenn
+   * Tipp bereits gespeichert + nicht gesperrt).
+   */
+  onEdit?: () => void;
 }
 
-export function MatchCard({ match, tip, onChange }: Props) {
+export function MatchCard({ match, tip, onChange, onEdit }: Props) {
   const t = tip ?? { tip_1: 0, tip_2: 0, saved: false };
-  const disabled = match.locked || !onChange;
+  // Tipp gespeichert + nicht gesperrt = "grau", Steppers aus, Bearbeiten-Button.
+  const lockedForEdit = t.saved && !match.locked;
+  const disabled = match.locked || !onChange || lockedForEdit;
 
   return (
-    <div className={`card match${t.saved ? " saved" : ""}`}>
+    <div
+      className={`card match${t.saved ? " saved" : ""}${lockedForEdit ? " readonly" : ""}`}
+    >
       <div className="top">
         <span className="meta">{match.round_label}</span>
         {match.locked ? (
@@ -100,9 +109,31 @@ export function MatchCard({ match, tip, onChange }: Props) {
         </div>
       )}
       {t.saved && (
-        <div className="tip-flag">
-          <Check size={15} />
-          {typeof t.points === "number" ? `Gewertet · ${t.points} Pkt` : "Tipp gespeichert"}
+        <div
+          className="tip-flag"
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}
+        >
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Check size={15} />
+            {typeof t.points === "number" ? `Gewertet · ${t.points} Pkt` : "Tipp gespeichert"}
+          </span>
+          {lockedForEdit && onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="btn btn-ghost"
+              style={{
+                width: "auto",
+                padding: "6px 12px",
+                fontSize: 12,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <Pencil size={12} /> Bearbeiten
+            </button>
+          )}
         </div>
       )}
     </div>

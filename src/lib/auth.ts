@@ -52,9 +52,20 @@ export function generateLoginToken(): string {
   return crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
 }
 
-export function generateInviteCode(): string {
-  // 24 Zeichen hex aus zufälligen Bytes (96 bit Entropie)
-  const buf = new Uint8Array(12);
+/**
+ * Crockford-Base32-ähnliches Alphabet ohne verwechselbare Zeichen
+ * (kein 0/O, 1/I/L). 31 Zeichen → 5-stellig ≈ 28,6 Mio Codes.
+ * Reicht für eine Squad (≤ 100 Spieler) locker, der Insert retried bei
+ * Kollision in der API-Route.
+ */
+const INVITE_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+export function generateInviteCode(length = 5): string {
+  const buf = new Uint8Array(length);
   crypto.getRandomValues(buf);
-  return Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("");
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += INVITE_CODE_ALPHABET[buf[i] % INVITE_CODE_ALPHABET.length];
+  }
+  return out;
 }

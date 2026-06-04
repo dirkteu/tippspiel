@@ -63,6 +63,10 @@ body{
 .pm button{width:30px;height:24px;border-radius:7px;background:var(--surface-2);color:var(--fg1);border:0;font-size:16px;line-height:1;cursor:pointer;transition:transform var(--dur-fast),background var(--dur-fast)}
 .pm button:active{transform:scale(.9);background:var(--slate-600)}
 .match.saved{outline:1px solid rgba(5,150,105,.35)}
+/* Tipp gespeichert + nicht gesperrt → grau, Steppers dimmen, Bearbeiten-Button aktiv */
+.match.readonly{background:var(--surface-2);opacity:.78}
+.match.readonly .num{color:var(--fg3)}
+.match.readonly .pm button{opacity:.4;pointer-events:none}
 .tip-flag{margin-top:12px;display:flex;align-items:center;gap:7px;font-size:12px;color:var(--green-400);font-weight:500}
 .tip-flag svg{width:15px;height:15px}
 

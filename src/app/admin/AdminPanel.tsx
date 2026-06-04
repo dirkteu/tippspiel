@@ -7,6 +7,7 @@ import {
   Copy,
   Dice5,
   Lock,
+  Menu,
   Plus,
   Trash2,
   Upload,
@@ -115,34 +116,112 @@ function fromDatetimeLocal(local: string): string {
 
 // ====================================================== AdminPanel =========
 
+type AdminTab = "A" | "B" | "C";
+const TAB_TITLES: Record<AdminTab, string> = {
+  A: "Roster & Teams",
+  B: "Spiele",
+  C: "Einstellungen",
+};
+
 export function AdminPanel({ roster, teams, matches, config }: Props) {
   const router = useRouter();
+  const [tab, setTab] = useState<AdminTab>("A");
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  // Globale Refresh-Funktion — die meisten Aktionen lösen ein Server-Reload aus.
   const refresh = () => router.refresh();
 
   function logout() {
-    // sq_admin clientseitig auf beiden bekannten Pfaden räumen
-    // (alte Sessions hatten path=/admin, neue path=/).
     document.cookie = "sq_admin=; Max-Age=0; path=/";
     document.cookie = "sq_admin=; Max-Age=0; path=/admin";
     router.refresh();
   }
 
+  function pickTab(next: AdminTab) {
+    setTab(next);
+    setMenuOpen(false);
+  }
+
   return (
     <div className="scroll" style={{ padding: "0 20px 60px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 22 }}>
-        <span className="kicker">Admin</span>
-        <button className="btn btn-ghost" style={{ width: "auto", padding: "8px 14px", fontSize: 13 }} onClick={logout}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 22, gap: 12 }}>
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="Menü"
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          <Menu size={19} />
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span className="kicker">Admin</span>
+          <h1 className="h1" style={{ marginTop: 2, fontSize: 22 }}>
+            {TAB_TITLES[tab]}
+          </h1>
+        </div>
+        <button
+          className="btn btn-ghost"
+          style={{ width: "auto", padding: "8px 14px", fontSize: 13 }}
+          onClick={logout}
+        >
           Abmelden
         </button>
       </div>
-      <h1 className="h1" style={{ marginTop: 4 }}>Steuerung</h1>
 
-      <RosterSection roster={roster} onChange={refresh} />
-      <TeamsSection teams={teams} roster={roster} onChange={refresh} />
-      <MatchesSection matches={matches} onChange={refresh} />
-      <ConfigSection config={config} onChange={refresh} />
+      {menuOpen && (
+        <div
+          className="card pad"
+          style={{
+            marginTop: 16,
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            background: "var(--bg-elevated)",
+          }}
+        >
+          {(["A", "B", "C"] as AdminTab[]).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => pickTab(k)}
+              className={`btn ${tab === k ? "btn-primary" : "btn-ghost"}`}
+              style={{
+                justifyContent: "flex-start",
+                textAlign: "left",
+                padding: "12px 14px",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <span
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  background: tab === k ? "rgba(255,255,255,.18)" : "var(--surface-2)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                {k}
+              </span>
+              {TAB_TITLES[k]}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === "A" && (
+        <>
+          <RosterSection roster={roster} onChange={refresh} />
+          <TeamsSection teams={teams} roster={roster} onChange={refresh} />
+        </>
+      )}
+      {tab === "B" && <MatchesSection matches={matches} onChange={refresh} />}
+      {tab === "C" && <ConfigSection config={config} onChange={refresh} />}
     </div>
   );
 }

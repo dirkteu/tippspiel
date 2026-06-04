@@ -3,6 +3,7 @@ import { Bell } from "lucide-react";
 import { AppBar } from "@/components/primitives/AppBar";
 import { Button } from "@/components/primitives/Button";
 import { MatchCard } from "@/components/MatchCard";
+import { GroupStandingsTable } from "@/components/GroupStandingsTable";
 import { getSession } from "@/lib/auth";
 import {
   fetchAllMatches,
@@ -10,6 +11,7 @@ import {
   isLocked,
   roundLabel,
 } from "@/lib/matches";
+import { computeGroupStandings } from "@/lib/standings";
 
 export default async function SpieltagPage() {
   const session = (await getSession())!;
@@ -24,6 +26,7 @@ export default async function SpieltagPage() {
     .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
   const next = upcoming[0] ?? null;
   const restPreview = upcoming.slice(1, 3);
+  const standings = computeGroupStandings(matches);
 
   return (
     <div className="scroll">
@@ -107,6 +110,15 @@ export default async function SpieltagPage() {
           ))}
         </>
       )}
+
+      {standings.map((g) => (
+        <section key={g.group_name}>
+          <div className="section-head">
+            <span className="kicker">Tabelle · {g.group_name}</span>
+          </div>
+          <GroupStandingsTable group={g} />
+        </section>
+      ))}
     </div>
   );
 }

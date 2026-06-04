@@ -22,18 +22,35 @@ export async function POST(req: Request) {
   }
 
   const sb = supabaseService();
-  const { data, error } = await sb
-    .from("profiles")
-    .insert({
-      real_name: parsed.data.real_name,
-      gender: parsed.data.gender,
-      real_partner_id: parsed.data.real_partner_id ?? null,
-      invite_code: generateInviteCode(),
-    })
-    .select("id,real_name,gender,real_partner_id,invite_code")
-    .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Retry-Loop: 5-stellige Codes können in seltenen Fällen kollidieren.
+  // Postgres unique_violation = 23505 → einfach neuen Code würfeln.
+  let data: { id: string; real_name: string; gender: "m" | "f"; real_partner_id: string | null; invite_code: string } | null = null;
+  let lastErr: { message: string; code?: string } | null = null;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const insert = await sb
+      .from("profiles")
+      .insert({
+        real_name: parsed.data.real_name,
+        gender: parsed.data.gender,
+        real_partner_id: parsed.data.real_partner_id ?? null,
+        invite_code: generateInviteCode(),
+      })
+      .select("id,real_name,gender,real_partner_id,invite_code")
+      .single();
+    if (!insert.error) {
+      data = insert.data;
+      break;
+    }
+    lastErr = insert.error;
+    if (insert.error.code !== "23505") break; // anderer Fehler → abbrechen
+  }
+  if (!data) {
+    return NextResponse.json(
+      { error: lastErr?.message ?? "Insert fehlgeschlagen" },
+      { status: 500 },
+    );
+  }
 
   // Wenn echter Partner angegeben: Reziprozität herstellen (auch der Partner zeigt zurück)
   if (parsed.data.real_partner_id) {

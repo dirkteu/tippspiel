@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Award } from "lucide-react";
+import Link from "next/link";
+import { Award, Info } from "lucide-react";
 import { AppBar } from "@/components/primitives/AppBar";
 import { Button } from "@/components/primitives/Button";
 import { MatchCard, type MatchInfo, type TipState } from "@/components/MatchCard";
@@ -39,6 +40,14 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
     setState((p) => ({
       ...p,
       [id]: { tip_1: t.tip_1, tip_2: t.tip_2, saved: false, points: p[id]?.points ?? null },
+    }));
+  }
+
+  function editMatch(id: string) {
+    // "Bearbeiten" → Tipp lokal als ungespeichert markieren, Werte bleiben.
+    setState((p) => ({
+      ...p,
+      [id]: { ...p[id], saved: false },
     }));
   }
 
@@ -91,7 +100,13 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
   return (
     <>
       <div className="scroll">
-        <AppBar />
+        <AppBar
+          action={
+            <Link href="/regeln" className="icon-btn" aria-label="Tipp-Regeln">
+              <Info size={19} />
+            </Link>
+          }
+        />
         <span className="kicker">Deine Tipps</span>
         <h1 className="h1" style={{ marginTop: 4 }}>Spieltag-Übersicht</h1>
 
@@ -138,6 +153,7 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
               match={m}
               tip={state[m.id]}
               onChange={(t) => setMatch(m.id, t)}
+              onEdit={() => editMatch(m.id)}
             />
             {errors[m.id] && (
               <div style={{ color: "var(--loss)", fontSize: 12, padding: "0 8px 12px" }}>
