@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth";
 import { supabaseService } from "@/lib/supabase/server";
 import { fetchAllMatches, fetchTeamMemberIds, fetchTipsForTeam } from "@/lib/matches";
 import { tilesUnlocked } from "@/lib/tiles";
+import { PartnerGuessList } from "./PartnerGuessList";
 
 export default async function PartnerPage() {
   const session = (await getSession())!;
@@ -20,10 +21,21 @@ export default async function PartnerPage() {
     .eq("gender", partnerGender)
     .maybeSingle();
 
-  const [matches, tips] = await Promise.all([
+  const [matches, tips, candidatesRes] = await Promise.all([
     fetchAllMatches(),
     fetchTipsForTeam(memberIds),
+    // Alle Roster-Spieler des Partner-Geschlechts (mit echtem Namen).
+    // Ohne echte Identität von "mir selbst" als Distraktor — der Spieler
+    // ist sowieso nicht Kandidat.
+    sb
+      .from("profiles")
+      .select("id,real_name")
+      .eq("gender", partnerGender)
+      .order("real_name", { ascending: true }),
   ]);
+  const candidates = (candidatesRes.data ?? [])
+    .filter((c) => c.real_name)
+    .map((c) => ({ id: c.id, real_name: c.real_name! }));
 
   const open = tilesUnlocked(
     { member_profile_ids: memberIds },
@@ -67,6 +79,8 @@ export default async function PartnerPage() {
           </p>
         </div>
       )}
+
+      {candidates.length > 0 && <PartnerGuessList candidates={candidates} />}
     </div>
   );
 }

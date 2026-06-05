@@ -10,24 +10,40 @@ interface TeamRanking {
   is_me: boolean;
 }
 
+interface IndividualRanking {
+  id: string;
+  username: string;
+  gender: "m" | "f";
+  total_points: number;
+  is_me: boolean;
+}
+
+const RANK_CLS = ["gold", "silver", "bronze"];
+
+function rankIcon(place: number, isLast: boolean): string {
+  if (place === 1) return "⭐⭐⭐";
+  if (place === 2) return "⭐⭐";
+  if (place === 3) return "⭐";
+  if (isLast) return "💋";
+  return "";
+}
+
 export default async function TabellePage() {
   const session = (await getSession())!;
   const sb = supabaseService();
 
-  // Alle Teams laden
-  const { data: teams } = await sb
-    .from("teams")
-    .select("id,team_name");
-  // Alle Profile + Tipps + Champion-Tipps für die Aggregation
-  const [{ data: profiles }, { data: tips }, { data: champTips }] = await Promise.all([
-    sb.from("profiles").select("id,team_id"),
+  // Teams + Profile + alle Tipps
+  const [{ data: teams }, { data: profiles }, { data: tips }, { data: champTips }] = await Promise.all([
+    sb.from("teams").select("id,team_name"),
+    sb.from("profiles").select("id,team_id,username,gender,joined_at"),
     sb.from("tips").select("profile_id,points_earned"),
     sb.from("champion_tips").select("profile_id,points_earned"),
   ]);
 
-  const profileToTeam = new Map<string, string>();
+  const profileToTeam = new Map<string, string | null>();
   for (const p of profiles ?? []) profileToTeam.set(p.id, p.team_id);
 
+  // Team-Aggregation
   const pointsByTeam = new Map<string, { total: number; vt: number }>();
   for (const t of tips ?? []) {
     const teamId = profileToTeam.get(t.profile_id);
@@ -45,7 +61,7 @@ export default async function TabellePage() {
     pointsByTeam.set(teamId, cur);
   }
 
-  const ranking: TeamRanking[] = (teams ?? [])
+  const teamRanking: TeamRanking[] = (teams ?? [])
     .map((t) => {
       const stats = pointsByTeam.get(t.id) ?? { total: 0, vt: 0 };
       return {
@@ -58,18 +74,41 @@ export default async function TabellePage() {
     })
     .sort((a, b) => b.total_points - a.total_points);
 
-  const RANK_CLS = ["gold", "silver", "bronze"];
+  // Einzel-Aggregation (nur Spieler die schon beigetreten sind = haben Pseudonym)
+  const pointsByPlayer = new Map<string, number>();
+  for (const t of tips ?? []) {
+    pointsByPlayer.set(t.profile_id, (pointsByPlayer.get(t.profile_id) ?? 0) + t.points_earned);
+  }
+  for (const c of champTips ?? []) {
+    pointsByPlayer.set(c.profile_id, (pointsByPlayer.get(c.profile_id) ?? 0) + c.points_earned);
+  }
+
+  const individualRanking: IndividualRanking[] = (profiles ?? [])
+    .filter((p) => p.joined_at && p.username)
+    .map((p) => ({
+      id: p.id,
+      username: p.username!,
+      gender: p.gender as "m" | "f",
+      total_points: pointsByPlayer.get(p.id) ?? 0,
+      is_me: p.id === session.profile.id,
+    }))
+    .sort((a, b) => b.total_points - a.total_points);
+
+  const menRanking = individualRanking.filter((r) => r.gender === "m");
+  const womenRanking = individualRanking.filter((r) => r.gender === "f");
 
   return (
     <div className="scroll">
       <AppBar />
       <span className="kicker">Deine Tabellen</span>
       <h1 className="h1" style={{ marginTop: 4 }}>Team-Ranking</h1>
+
+      {/* Team-Ranking */}
       <div className="lb" style={{ marginTop: 16 }}>
-        {ranking.length === 0 && (
+        {teamRanking.length === 0 && (
           <p className="t-small">Noch keine Teams angelegt.</p>
         )}
-        {ranking.map((r, i) => (
+        {teamRanking.map((r, i) => (
           <div key={r.id} className={`lb-row${r.is_me ? " me" : ""}`}>
             <span className={`lb-rank ${RANK_CLS[i] ?? ""}`}>{i + 1}</span>
             <span className="lb-av">🏁</span>
@@ -84,6 +123,113 @@ export default async function TabellePage() {
           </div>
         ))}
       </div>
+
+      {/* Einzel-Ranking */}
+      <IndividualBlock
+        title="Einzel · Gesamt"
+        rows={individualRanking}
+        currentId={session.profile.id}
+      />
+      <IndividualBlock
+        title="Männer"
+        rows={menRanking}
+        currentId={session.profile.id}
+      />
+      <IndividualBlock
+        title="Frauen"
+        rows={womenRanking}
+        currentId={session.profile.id}
+      />
+    </div>
+  );
+}
+
+/**
+ * Top-3 mit Sternen, Letzter mit Kuss-Smiley, eigene Position eingeblendet
+ * falls außerhalb dieser sichtbaren Auswahl.
+ */
+function IndividualBlock({
+  title,
+  rows,
+  currentId,
+}: {
+  title: string;
+  rows: IndividualRanking[];
+  currentId: string;
+}) {
+  if (rows.length === 0) {
+    return null;
+  }
+  const top = rows.slice(0, 3);
+  const lastIdx = rows.length - 1;
+  const last = rows.length > 3 ? rows[lastIdx] : null;
+  const myIdx = rows.findIndex((r) => r.id === currentId);
+  const myShown = top.some((r) => r.id === currentId) || (last && last.id === currentId);
+  const meExtra = !myShown && myIdx >= 0 ? { ...rows[myIdx], _place: myIdx + 1 } : null;
+
+  return (
+    <section>
+      <div className="section-head">
+        <span className="kicker">{title}</span>
+      </div>
+      <div className="lb">
+        {top.map((r, i) => (
+          <RankRow
+            key={r.id}
+            place={i + 1}
+            row={r}
+            icon={rankIcon(i + 1, false)}
+          />
+        ))}
+        {last && (
+          <>
+            {rows.length > 4 && (
+              <div
+                style={{ textAlign: "center", color: "var(--fg4)", fontSize: 13, padding: "4px 0" }}
+              >
+                …
+              </div>
+            )}
+            <RankRow
+              place={lastIdx + 1}
+              row={last}
+              icon={rankIcon(lastIdx + 1, true)}
+            />
+          </>
+        )}
+        {meExtra && (
+          <RankRow
+            place={meExtra._place}
+            row={meExtra}
+            icon=""
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function RankRow({
+  place,
+  row,
+  icon,
+}: {
+  place: number;
+  row: IndividualRanking;
+  icon: string;
+}) {
+  return (
+    <div className={`lb-row${row.is_me ? " me" : ""}`}>
+      <span className={`lb-rank ${RANK_CLS[place - 1] ?? ""}`}>{place}</span>
+      <span className="lb-av">{row.gender === "f" ? "♀" : "♂"}</span>
+      <div>
+        <div className="lb-name">{row.username}</div>
+        {icon && <div className="lb-sub" style={{ fontSize: 14 }}>{icon}</div>}
+      </div>
+      <span className="lb-pts">
+        {row.total_points}
+        <small> Pkt</small>
+      </span>
     </div>
   );
 }
