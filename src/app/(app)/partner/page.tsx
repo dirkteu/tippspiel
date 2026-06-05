@@ -62,7 +62,9 @@ export default async function PartnerPage() {
   return (
     <div className="scroll">
       <AppBar />
-      <span className="kicker">Dein geheimer Partner</span>
+      <span className="kicker">
+        {partnerGender === "f" ? "Deine geheime Nachbarin" : "Dein geheimer Nachbar"}
+      </span>
       <h1 className="h1" style={{ marginTop: 4 }}>Wer ist es?</h1>
       <p className="t-small" style={{ marginTop: 6, marginBottom: 18 }}>
         Jeder Volltreffer (≥3 Punkte) deines Teams deckt eine Kachel auf.
@@ -78,10 +80,13 @@ export default async function PartnerPage() {
         />
       ) : (
         <div className="card pad">
-          <span className="kicker">Partner noch nicht da</span>
+          <span className="kicker">
+            {partnerGender === "f" ? "Nachbarin noch nicht da" : "Nachbar noch nicht da"}
+          </span>
           <p className="t-small" style={{ marginTop: 6 }}>
-            Dein Partner hat den Squad noch nicht betreten. Erinnere ihn doch
-            an seinen Einladungs-Link.
+            {partnerGender === "f"
+              ? "Deine Nachbarin hat den Squad noch nicht betreten. Erinnere sie doch an ihren Einladungs-Link."
+              : "Dein Nachbar hat den Squad noch nicht betreten. Erinnere ihn doch an seinen Einladungs-Link."}
           </p>
         </div>
       )}
@@ -90,6 +95,7 @@ export default async function PartnerPage() {
         <PartnerGuessList
           candidates={candidates}
           alreadyRevealed={alreadyRevealed ? (partner?.username ?? null) : null}
+          partnerGender={partnerGender}
         />
       )}
     </div>

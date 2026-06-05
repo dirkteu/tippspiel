@@ -100,7 +100,7 @@ export default async function ProfilPage() {
         </div>
         <div className="stat">
           <div className="v">{tilesOpen}/9</div>
-          <div className="l">Partner-Kacheln</div>
+          <div className="l">Nachbar-Kacheln</div>
         </div>
       </div>
 

@@ -74,7 +74,7 @@ export function JoinForm({ code, gender, teamName, alreadyTeamNamed }: Props) {
       </h1>
       <p className="t-small" style={{ marginTop: 8, marginBottom: 26 }}>
         Wähle ein Pseudonym{needsTeamName ? " und einen Team-Namen" : ""} — fertig.
-        Dein Foto bekommt der Admin schon vom Squad-Admin.
+        Dein Foto bekommt der Admin schon vom Spielleiter.
       </p>
 
       {teamName && (
@@ -106,7 +106,7 @@ export function JoinForm({ code, gender, teamName, alreadyTeamNamed }: Props) {
             autoComplete="off"
           />
           <p className="t-small" style={{ marginTop: 6 }}>
-            Den Namen siehst nur du beim Anlegen — dein Partner sieht ihn ebenfalls,
+            Den Namen siehst nur du beim Anlegen — dein Nachbar sieht ihn ebenfalls,
             ohne deine Identität zu kennen.
           </p>
         </>

@@ -6,7 +6,7 @@ import { House, PencilLine, Lock, LockOpen, BarChart3, CircleUser } from "lucide
 const TABS = [
   { href: "/spieltag", icon: House, label: "Spieltag" },
   { href: "/tipps", icon: PencilLine, label: "Tipps" },
-  { href: "/partner", icon: Lock, openIcon: LockOpen, label: "Partner" },
+  { href: "/partner", icon: Lock, openIcon: LockOpen, label: "Nachbar" },
   { href: "/tabelle", icon: BarChart3, label: "Tabelle" },
   { href: "/profil", icon: CircleUser, label: "Profil" },
 ] as const;

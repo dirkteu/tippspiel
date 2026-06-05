@@ -12,9 +12,10 @@ interface Props {
   candidates: Candidate[];
   /** Wenn bereits in der DB als aufgelöst markiert: Pseudonym sofort zeigen, kein Konfetti */
   alreadyRevealed?: string | null;
+  partnerGender: "m" | "f";
 }
 
-export function PartnerGuessList({ candidates, alreadyRevealed = null }: Props) {
+export function PartnerGuessList({ candidates, alreadyRevealed = null, partnerGender }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [tried, setTried] = useState<Set<string>>(new Set());
   const [revealed, setRevealed] = useState<{ id: string; username: string } | null>(
@@ -71,7 +72,9 @@ export function PartnerGuessList({ candidates, alreadyRevealed = null }: Props) 
               Treffer! 🎉
             </div>
             <p className="t-small" style={{ marginTop: 6 }}>
-              Dein geheimer Partner spielt unter dem Pseudonym
+              {partnerGender === "f"
+                ? "Deine geheime Nachbarin spielt unter dem Pseudonym"
+                : "Dein geheimer Nachbar spielt unter dem Pseudonym"}
             </p>
             <div className="partner-name" style={{ marginTop: 8 }}>
               {revealed.username || "(noch keins)"}
