@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ShieldHalf, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { getSession } from "@/lib/auth";
 
 export default async function WelcomePage() {
@@ -26,12 +26,13 @@ export default async function WelcomePage() {
               minHeight: "70vh",
             }}
           >
-            <div
-              className="brand-badge"
-              style={{ width: 64, height: 64, borderRadius: 18 }}
-            >
-              <ShieldHalf size={34} color="#fff" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Bülser Alm"
+              width={96}
+              height={96}
+              style={{ display: "block", objectFit: "contain" }}
+            />
             <div>
               <div
                 style={{

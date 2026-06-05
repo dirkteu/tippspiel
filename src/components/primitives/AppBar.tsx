@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Info, ShieldHalf } from "lucide-react";
+import { Info } from "lucide-react";
 import type { ReactNode } from "react";
 
 /**
@@ -10,9 +10,13 @@ export function AppBar({ action }: { action?: ReactNode }) {
   return (
     <div className="appbar">
       <div className="brand">
-        <div className="brand-badge">
-          <ShieldHalf size={17} color="#fff" />
-        </div>
+        <img
+          src="/logo.png"
+          alt="Bülser Alm"
+          width={30}
+          height={30}
+          style={{ display: "block", objectFit: "contain" }}
+        />
         <span className="brand-name">
           BÜLSER <em>ALM</em>
         </span>
