@@ -46,18 +46,18 @@ export default async function WelcomePage() {
                 BÜLSER <span style={{ color: "var(--green-500)" }}>ALM</span>
               </div>
               <p className="t-body" style={{ marginTop: 10, maxWidth: 280 }}>
-                Tippe die WM 2026 mit deinem geheimen Partner. Jeder Volltreffer
-                deckt eine Kachel auf — wer steckt dahinter?
+                Tippe die WM 2026 mit deinem Nachbarn. Jeder Volltreffer deckt
+                eine Kachel auf — mit welchem Nachbarn bist du in einem Team?
               </p>
             </div>
 
             <div className="grid3" style={{ width: 180, height: 180, marginTop: 4 }}>
-              <div
+              <img
                 className="photo"
-                style={{ fontSize: 90, display: "flex", alignItems: "center", justifyContent: "center" }}
-              >
-                ⚽
-              </div>
+                src="/logo.png"
+                alt=""
+                style={{ objectFit: "contain" }}
+              />
               <div className="tiles">
                 {[1, 0, 1, 0, 1, 1, 0, 1, 0].map((v, i) => (
                   <div key={i} className={`tile${v ? "" : " open"}`}>
@@ -68,7 +68,7 @@ export default async function WelcomePage() {
             </div>
 
             <p className="t-small" style={{ maxWidth: 280, marginTop: 8 }}>
-              Du brauchst einen WhatsApp-Link von deinem Squad-Admin, um
+              Du brauchst einen WhatsApp-Link von deinem Spielleiter, um
               loszulegen.
             </p>
           </div>
