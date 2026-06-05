@@ -118,7 +118,6 @@ export function JoinForm({ code, gender, teamName, alreadyTeamNamed, isTeamNameO
         <p style={{ color: "var(--loss)", marginTop: 14, fontSize: 14 }}>{error}</p>
       )}
 
-      <div style={{ flex: 1 }} />
       <Button variant="primary" disabled={!ready || submitting} onClick={submit} style={{ marginTop: 24 }}>
         {submitting ? "Speichere…" : "Beitreten & Tippen"}
       </Button>
