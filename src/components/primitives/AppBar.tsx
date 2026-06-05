@@ -13,8 +13,8 @@ export function AppBar({ action }: { action?: ReactNode }) {
         <img
           src="/logo.png"
           alt="Bülser Alm"
-          width={30}
-          height={30}
+          width={38}
+          height={38}
           style={{ display: "block", objectFit: "contain" }}
         />
         <span className="brand-name">
