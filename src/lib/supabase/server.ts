@@ -9,8 +9,9 @@ let cached: SupabaseClient | null = null;
  */
 export function supabaseService(): SupabaseClient {
   if (cached) return cached;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Bracket-Notation umgeht Next.js Build-Time-Inlining.
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
   if (!url || !key) {
     throw new Error(
       "SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY müssen in .env gesetzt sein",

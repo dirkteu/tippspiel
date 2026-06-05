@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
  * Dieser Pfad startet mit /admin, daher wird der alte Cookie noch gesendet.
  */
 export async function GET() {
-  const expected = process.env.ADMIN_PASSWORD;
+  const expected = process.env["ADMIN_PASSWORD"];
   if (!expected) {
     return NextResponse.json({ error: "Admin nicht konfiguriert" }, { status: 500 });
   }

@@ -14,7 +14,7 @@ const Body = z.object({
 
 export async function POST(req: Request) {
   const secret = req.headers.get("x-cron-secret");
-  if (!secret || secret !== process.env.CRON_SECRET) {
+  if (!secret || secret !== process.env["CRON_SECRET"]) {
     return NextResponse.json({ error: "Verboten" }, { status: 403 });
   }
   const parsed = Body.safeParse(await req.json());

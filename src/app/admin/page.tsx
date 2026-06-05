@@ -7,7 +7,7 @@ import { AdminPanel } from "./AdminPanel";
 const ADMIN_COOKIE = "sq_admin";
 
 export default async function AdminPage() {
-  const expected = process.env.ADMIN_PASSWORD;
+  const expected = process.env["ADMIN_PASSWORD"];
   if (!expected) {
     return (
       <div className="shell">
@@ -61,7 +61,7 @@ export default async function AdminPage() {
 
 export async function loginAction(formData: FormData) {
   "use server";
-  const expected = process.env.ADMIN_PASSWORD;
+  const expected = process.env["ADMIN_PASSWORD"];
   const password = String(formData.get("password") ?? "");
   if (!expected || password !== expected) {
     redirect("/admin?error=1");

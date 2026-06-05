@@ -1,0 +1,24 @@
+was noch fehlt TODOS #Tabelle der gruppe e # wenn tipp gespeichert ist dann leicht ein grauen und bearbeiten anbieten ! # bearbeiten nur bis 5 Minuten vor Spielbeginn, danach gesperrt # regel und punkte vergabe einbauen # unter Tipp Regeln
+Weltmeister Tipp ist nur einmal möglich! und muss bis zur Hauptrunde erstes spiel % Minuten vorher getipp sein ! # Backend Burgger Menü und Unterteilung der einzeln teile a/b/c etc.# dann Tendenz zu den Spiel Tips als Tesxtdatei zum download! # die kracheln als puzzel wobei die ersten ruhig kleiner und am rand sein können # Tabelle mit Tendenz # nach jeden Spieltag txt Datei mit den besten drei Tippern zum kopieren für whattsapp Admin bereich#
+Der "Sicherheits-Style": Kurzcodes Wenn du die kryptische ID aus Sicherheitsgründen behalten willst (damit niemand erraten kann, wie die Links anderer Firmen heißen), kannst du sie wie bei bit.ly extrem einkürzen.❌ Vorher: .../join/74c1a96154b21a7189eb275f
+Nachher: https://deine-domain.de/j/xyz49 # kommentrie das mit dem Foto aus # ersetze es durch die möhlichkeit im admin Bereich jeden spieler ein bild hochzulanden # der spieler selber muss nichts machen. 
+
+
+
+------------------
+
+was noch fehlt TODOS 
+# Pseudonym wird nicht gespeichert und oder nicht angezeigt 
+# http://localhost:3001/tipps - es müssen alle spiel beim tippen einzeln gespeichert werden nicht global "Tipps speichern" jeder tipp einzeln !
+# http://localhost:3001/partner - das bild darf nicht durchscheinen 
+# http://localhost:3001/profil Tipp - Regel werden nicht angezeigt 
+# Zahnrad ohne Funktion #http://localhost:3001/partner // http://localhost:3001/tipps info button ohne Funktion 
+# http://localhost:3001/spieltag glocke ohne Funktion 
+# http://localhost:3001/tipps Gruppe E - fett · 14. Juni · 19:00 - Uhr 📍 Houston Stadium - fett 
+# http://localhost:3001/admin Einstellung ist falsch - der teil muss unter spiele ! 
+# http://localhost:3001/admin Roster & Teams - Teams nach oben !! dann Spieler #http://localhost:3001/admin 
+# auswürfeln geht nicht 
+# WICHTIG http://localhost:3001/profil steht die Team Zugehörigkeit, das ist doch voll vertall das soll doch als mann erstmal verborgen sein ! das muss raus - so lange bist nicht alle kacheln aufgedeckt sind !!! der einer der Partner es erkannt hat
+# wir bauen noch ein einzel raking ein! plazierung über alle / palzierung entweder Mann/Frau Platz eins drei sterne / zwei sterne / ein Stern der letzte kuss smily # Überschrift Squad-Ranking ändern in Team-Ranking daunter Top drei +letzter persönlich und oder M/F 
+# http://localhost:3001/spieltag Secret Squad -raus- Deine Startseite -rein-  http://localhost:3001/tabelle Deine Tabellen 
+# http://localhost:3001/partner hier kann der Spieler seinen Partner Auflösen dazu eine liste mit orginal namen und einen button auflösen! wenn richtig dann Animation feurwerk und konfeti 
