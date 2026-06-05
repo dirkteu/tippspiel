@@ -30,7 +30,7 @@ body{
 .brand-badge{width:30px;height:30px;border-radius:9px;background:var(--accent);
   display:flex;align-items:center;justify-content:center;box-shadow:var(--glow-green)}
 .brand-badge svg{width:17px;height:17px;color:#fff}
-.brand-name{font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:-.02em;color:var(--fg1)}
+.brand-name{font-family:var(--font-display);font-weight:700;font-size:20px;line-height:38px;letter-spacing:-.02em;color:var(--fg1)}
 .brand-name em{font-style:normal;color:var(--green-500)}
 .icon-btn{width:38px;height:38px;border-radius:11px;background:var(--surface);border:1px solid var(--border-soft);
   display:flex;align-items:center;justify-content:center;color:var(--fg2);cursor:pointer}
