@@ -1,9 +1,11 @@
-import { Settings, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { AppBar } from "@/components/primitives/AppBar";
 import { getSession } from "@/lib/auth";
 import { supabaseService } from "@/lib/supabase/server";
 import { fetchAllMatches, fetchTeamMemberIds, fetchTipsForTeam } from "@/lib/matches";
 import { tilesUnlocked } from "@/lib/tiles";
+import { LogoutItem } from "./LogoutItem";
 
 export default async function ProfilPage() {
   const session = (await getSession())!;
@@ -55,13 +57,7 @@ export default async function ProfilPage() {
 
   return (
     <div className="scroll">
-      <AppBar
-        action={
-          <button className="icon-btn" aria-label="Einstellungen">
-            <Settings size={19} />
-          </button>
-        }
-      />
+      <AppBar />
       <div className="profile-head">
         <div className="profile-av">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -110,25 +106,24 @@ export default async function ProfilPage() {
 
       <div className="section-head"><span className="kicker">Konto</span></div>
       <div className="card" style={{ overflow: "hidden" }}>
-        {["Tipp-Regeln", "Abmelden"].map((t, i) => (
-          <div
-            key={t}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "14px 16px",
-              borderTop: i ? "1px solid var(--divider)" : "none",
-              color: "var(--fg2)",
-              fontSize: 15,
-            }}
-          >
-            {t}
-            <span style={{ marginLeft: "auto", color: "var(--fg4)", display: "flex" }}>
-              <ChevronRight size={18} />
-            </span>
-          </div>
-        ))}
+        <Link
+          href="/regeln"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "14px 16px",
+            color: "var(--fg2)",
+            fontSize: 15,
+            textDecoration: "none",
+          }}
+        >
+          Tipp-Regeln
+          <span style={{ marginLeft: "auto", color: "var(--fg4)", display: "flex" }}>
+            <ChevronRight size={18} />
+          </span>
+        </Link>
+        <LogoutItem />
       </div>
     </div>
   );

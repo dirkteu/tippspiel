@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { AppBar } from "@/components/primitives/AppBar";
 import { Button } from "@/components/primitives/Button";
 import { MatchCard, type TipState } from "@/components/MatchCard";
@@ -9,7 +9,7 @@ import {
   fetchAllMatches,
   fetchTipsForProfile,
   isLocked,
-  roundLabel,
+  matchHeading,
   type MatchRow,
 } from "@/lib/matches";
 import { computeGroupStandings } from "@/lib/standings";
@@ -54,14 +54,8 @@ export default async function SpieltagPage() {
 
   return (
     <div className="scroll">
-      <AppBar
-        action={
-          <button className="icon-btn" aria-label="Benachrichtigungen">
-            <Bell size={19} />
-          </button>
-        }
-      />
-      <span className="kicker">Secret Squad</span>
+      <AppBar />
+      <span className="kicker">Deine Startseite</span>
       <h1 className="h1" style={{ marginTop: 4 }}>
         {next ? formatCountdownHeadline(next.match_date) : "Turnier läuft"}
       </h1>
@@ -74,7 +68,7 @@ export default async function SpieltagPage() {
           <MatchCard
             match={{
               id: next.id,
-              round_label: roundLabel(next),
+              ...matchHeading(next),
               kickoff: next.match_date,
               team_1: next.team_1,
               team_2: next.team_2,
@@ -119,7 +113,7 @@ export default async function SpieltagPage() {
               key={m.id}
               match={{
                 id: m.id,
-                round_label: roundLabel(m),
+                ...matchHeading(m),
                 kickoff: m.match_date,
                 team_1: m.team_1,
                 team_2: m.team_2,

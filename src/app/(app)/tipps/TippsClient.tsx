@@ -1,9 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Award, Info } from "lucide-react";
 import { AppBar } from "@/components/primitives/AppBar";
-import { Button } from "@/components/primitives/Button";
 import { MatchCard, type MatchInfo, type TipState } from "@/components/MatchCard";
 import { Toast } from "@/components/primitives/Toast";
 import { WM2026_TEAMS } from "@/lib/teams-wm2026";
@@ -15,6 +14,8 @@ export interface TippsInitial {
   championLocked: boolean;
   championLockAt: string;
 }
+
+const SAVE_DEBOUNCE_MS = 600;
 
 export function TippsClient({ initial }: { initial: TippsInitial }) {
   const [state, setState] = useState<Record<string, TipState>>(() => {
@@ -30,70 +31,105 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
   const [champion, setChampion] = useState<string>(initial.championTip ?? "");
   const [savedChampion, setSavedChampion] = useState<boolean>(!!initial.championTip);
   const [toast, setToast] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Pro Match-ID ein Debounce-Timer, damit +/− Klicks gebündelt werden.
+  const matchTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const championTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Bei Unmount alle Timer aufräumen.
+  useEffect(() => {
+    const timers = matchTimers.current;
+    return () => {
+      for (const h of timers.values()) clearTimeout(h);
+      if (championTimer.current) clearTimeout(championTimer.current);
+    };
+  }, []);
 
   const openMatches = initial.matches.filter((m) => !m.locked);
   const lockedMatches = initial.matches.filter((m) => m.locked);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1600);
+  }
 
   function setMatch(id: string, t: { tip_1: number; tip_2: number }) {
     setState((p) => ({
       ...p,
       [id]: { tip_1: t.tip_1, tip_2: t.tip_2, saved: false, points: p[id]?.points ?? null },
     }));
+    // Debounced Auto-Save: jeden +/- Klick auf 600ms hinauszögern.
+    const existing = matchTimers.current.get(id);
+    if (existing) clearTimeout(existing);
+    const handle = setTimeout(() => saveMatch(id, t), SAVE_DEBOUNCE_MS);
+    matchTimers.current.set(id, handle);
   }
 
   function editMatch(id: string) {
-    // "Bearbeiten" → Tipp lokal als ungespeichert markieren, Werte bleiben.
+    // "Bearbeiten" → lokal als ungespeichert markieren, Werte bleiben.
+    // Erst der nächste +/- Klick löst dann auch wieder einen Save aus.
     setState((p) => ({
       ...p,
       [id]: { ...p[id], saved: false },
     }));
   }
 
-  async function saveAll() {
-    setSaving(true);
-    setErrors({});
+  async function saveMatch(id: string, t: { tip_1: number; tip_2: number }) {
+    setErrors((p) => {
+      if (!(id in p)) return p;
+      const next = { ...p };
+      delete next[id];
+      return next;
+    });
     try {
-      const payload = {
-        tips: openMatches.map((m) => ({
-          match_id: m.id,
-          tip_1: state[m.id].tip_1,
-          tip_2: state[m.id].tip_2,
-        })),
-        champion: !initial.championLocked && champion ? champion : undefined,
-      };
       const res = await fetch("/api/tips/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          tips: [{ match_id: id, tip_1: t.tip_1, tip_2: t.tip_2 }],
+        }),
       });
       const json = await res.json();
-      if (!res.ok) {
-        setToast("Speichern fehlgeschlagen");
-        setTimeout(() => setToast(null), 2200);
-        setSaving(false);
-        return;
+      const result = json.results?.[0] as
+        | { match_id: string; ok: boolean; error?: string }
+        | undefined;
+      if (res.ok && result?.ok) {
+        setState((p) => ({ ...p, [id]: { ...p[id], saved: true } }));
+        showToast("Tipp gespeichert");
+      } else {
+        setErrors((p) => ({ ...p, [id]: result?.error ?? "Speichern fehlgeschlagen" }));
       }
-      const newErrors: Record<string, string> = {};
-      const ok = new Set<string>();
-      for (const r of json.results as { match_id: string; ok: boolean; error?: string }[]) {
-        if (r.ok) ok.add(r.match_id);
-        else newErrors[r.match_id] = r.error ?? "Fehler";
-      }
-      setState((p) => {
-        const next = { ...p };
-        for (const m of openMatches) {
-          if (ok.has(m.id)) next[m.id] = { ...p[m.id], saved: true };
-        }
-        return next;
+    } catch {
+      setErrors((p) => ({ ...p, [id]: "Netzwerkfehler" }));
+    }
+  }
+
+  function setChampionDebounced(name: string) {
+    setChampion(name);
+    setSavedChampion(false);
+    if (initial.championLocked) return;
+    if (championTimer.current) clearTimeout(championTimer.current);
+    championTimer.current = setTimeout(() => saveChampion(name), SAVE_DEBOUNCE_MS);
+  }
+
+  async function saveChampion(name: string) {
+    if (!name) return;
+    try {
+      const res = await fetch("/api/tips/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tips: [], champion: name }),
       });
-      if (json.champion?.ok) setSavedChampion(true);
-      setErrors(newErrors);
-      setToast(`${ok.size} Tipp${ok.size === 1 ? "" : "s"} gespeichert`);
-      setTimeout(() => setToast(null), 2200);
-    } finally {
-      setSaving(false);
+      const json = await res.json();
+      if (res.ok && json.champion?.ok) {
+        setSavedChampion(true);
+        showToast("Weltmeister-Tipp gespeichert");
+      } else {
+        showToast(json.champion?.error ?? "Weltmeister-Tipp fehlgeschlagen");
+      }
+    } catch {
+      showToast("Netzwerkfehler");
     }
   }
 
@@ -109,6 +145,9 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
         />
         <span className="kicker">Deine Tipps</span>
         <h1 className="h1" style={{ marginTop: 4 }}>Spieltag-Übersicht</h1>
+        <p className="t-small" style={{ marginTop: 6, marginBottom: 8 }}>
+          Tipps werden automatisch gespeichert — kein Klick nötig.
+        </p>
 
         {/* Weltmeister-Tipp */}
         <div className="champion-card" style={{ marginTop: 18 }}>
@@ -120,10 +159,7 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
           </div>
           <select
             value={champion}
-            onChange={(e) => {
-              setChampion(e.target.value);
-              setSavedChampion(false);
-            }}
+            onChange={(e) => setChampionDebounced(e.target.value)}
             disabled={initial.championLocked}
           >
             <option value="">– wähle ein Team –</option>
@@ -175,13 +211,6 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
         )}
       </div>
 
-      <div className="savebar">
-        <div className="wrap">
-          <Button variant="primary" onClick={saveAll} disabled={saving}>
-            {saving ? "Speichere…" : "Tipps speichern"}
-          </Button>
-        </div>
-      </div>
       <Toast show={!!toast}>{toast}</Toast>
     </>
   );

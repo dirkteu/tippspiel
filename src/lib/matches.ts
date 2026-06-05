@@ -34,6 +34,18 @@ export function roundLabel(m: Pick<MatchRow, "round" | "group_name" | "match_dat
   return `${base} · ${date} · ${time}`;
 }
 
+/** Strukturierte Variante für UI mit Bold-Anteilen. */
+export function matchHeading(m: Pick<MatchRow, "round" | "group_name" | "match_date">): {
+  meta_primary: string;
+  meta_secondary: string;
+} {
+  const primary = m.round === "group" ? (m.group_name ?? "") : ROUND_LABEL[m.round];
+  const d = new Date(m.match_date);
+  const date = d.toLocaleDateString("de-DE", { day: "numeric", month: "long" });
+  const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return { meta_primary: primary, meta_secondary: `${date} · ${time} Uhr` };
+}
+
 export async function fetchAllMatches(): Promise<MatchRow[]> {
   const sb = supabaseService();
   const { data, error } = await sb

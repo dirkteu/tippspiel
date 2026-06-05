@@ -116,11 +116,10 @@ function fromDatetimeLocal(local: string): string {
 
 // ====================================================== AdminPanel =========
 
-type AdminTab = "A" | "B" | "C";
+type AdminTab = "A" | "B";
 const TAB_TITLES: Record<AdminTab, string> = {
-  A: "Roster & Teams",
-  B: "Spiele",
-  C: "Einstellungen",
+  A: "Teams & Spieler",
+  B: "Spiele & Einstellungen",
 };
 
 export function AdminPanel({ roster, teams, matches, config }: Props) {
@@ -178,7 +177,7 @@ export function AdminPanel({ roster, teams, matches, config }: Props) {
             background: "var(--bg-elevated)",
           }}
         >
-          {(["A", "B", "C"] as AdminTab[]).map((k) => (
+          {(["A", "B"] as AdminTab[]).map((k) => (
             <button
               key={k}
               type="button"
@@ -216,12 +215,17 @@ export function AdminPanel({ roster, teams, matches, config }: Props) {
 
       {tab === "A" && (
         <>
-          <RosterSection roster={roster} onChange={refresh} />
+          {/* Teams oben, damit man die Pool-Logik im Blick hat, dann Spieler. */}
           <TeamsSection teams={teams} roster={roster} onChange={refresh} />
+          <RosterSection roster={roster} onChange={refresh} />
         </>
       )}
-      {tab === "B" && <MatchesSection matches={matches} onChange={refresh} />}
-      {tab === "C" && <ConfigSection config={config} onChange={refresh} />}
+      {tab === "B" && (
+        <>
+          <MatchesSection matches={matches} onChange={refresh} />
+          <ConfigSection config={config} onChange={refresh} />
+        </>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import {
   fetchAllMatches,
   fetchTipsForProfile,
   isLocked,
-  roundLabel,
+  matchHeading,
 } from "@/lib/matches";
 import { TippsClient, type TippsInitial } from "./TippsClient";
 
@@ -31,7 +31,7 @@ export default async function TippsPage() {
 
   const matchInfos = matches.map((m) => ({
     id: m.id,
-    round_label: roundLabel(m),
+    ...matchHeading(m),
     kickoff: m.match_date,
     team_1: m.team_1,
     team_2: m.team_2,

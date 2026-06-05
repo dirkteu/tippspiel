@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Info } from "lucide-react";
 import { AppBar } from "@/components/primitives/AppBar";
 import { PartnerTile } from "@/components/PartnerTile";
@@ -38,9 +39,9 @@ export default async function PartnerPage() {
     <div className="scroll">
       <AppBar
         action={
-          <button className="icon-btn" aria-label="Info">
+          <Link href="/regeln" className="icon-btn" aria-label="Tipp-Regeln">
             <Info size={19} />
-          </button>
+          </Link>
         }
       />
       <span className="kicker">Dein geheimer Partner</span>

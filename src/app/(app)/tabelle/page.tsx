@@ -63,8 +63,8 @@ export default async function TabellePage() {
   return (
     <div className="scroll">
       <AppBar />
-      <span className="kicker">Anonyme Tabelle</span>
-      <h1 className="h1" style={{ marginTop: 4 }}>Squad-Ranking</h1>
+      <span className="kicker">Deine Tabellen</span>
+      <h1 className="h1" style={{ marginTop: 4 }}>Team-Ranking</h1>
       <div className="lb" style={{ marginTop: 16 }}>
         {ranking.length === 0 && (
           <p className="t-small">Noch keine Teams angelegt.</p>

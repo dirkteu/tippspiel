@@ -98,7 +98,11 @@ body{
 .grid3{position:relative;width:240px;height:240px;border-radius:14px;overflow:hidden}
 .grid3 .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   background:linear-gradient(135deg,#1f6f4a,#0b3a26);display:flex;align-items:center;justify-content:center;font-size:120px}
-.grid3 .tiles{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px}
+/* Foto durfte zwischen den Kacheln durchscheinen — Spoiler. gap:0 schließt
+   die Lücken; statt sichtbarer Trennlinien malen wir mit box-shadow inset
+   eine 1px-Hairline pro Kachel. */
+.grid3 .tiles{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:0}
+.grid3 .tile{box-shadow:inset 0 0 0 1px rgba(15,23,42,.35)}
 .tile{background:var(--tile);cursor:pointer;transition:opacity var(--dur-slow) var(--ease-out),transform var(--dur-slow) var(--ease-out);
   display:flex;align-items:center;justify-content:center;color:var(--fg4)}
 .tile svg{width:18px;height:18px;opacity:.5}

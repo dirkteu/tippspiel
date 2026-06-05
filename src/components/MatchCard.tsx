@@ -4,7 +4,10 @@ import { Check, Lock, Pencil } from "lucide-react";
 
 export interface MatchInfo {
   id: string;
-  round_label: string; // z.B. "Gruppe A · 11. Juni"
+  /** Erste, fett dargestellte Hälfte des Meta-Headers, z.B. "Gruppe E" */
+  meta_primary: string;
+  /** Zweite Hälfte, z.B. "14. Juni · 19:00 Uhr" */
+  meta_secondary: string;
   kickoff: string; // ISO
   team_1: string;
   team_2: string;
@@ -43,7 +46,14 @@ export function MatchCard({ match, tip, onChange, onEdit }: Props) {
       className={`card match${t.saved ? " saved" : ""}${lockedForEdit ? " readonly" : ""}`}
     >
       <div className="top">
-        <span className="meta">{match.round_label}</span>
+        <span className="meta">
+          <strong style={{ color: "var(--fg1)", fontWeight: 700 }}>
+            {match.meta_primary}
+          </strong>
+          {match.meta_secondary && (
+            <> · {match.meta_secondary}</>
+          )}
+        </span>
         {match.locked ? (
           <span className="locked-pill">
             <Lock size={11} /> gesperrt
@@ -105,7 +115,7 @@ export function MatchCard({ match, tip, onChange, onEdit }: Props) {
       </div>
       {match.stadium && (
         <div className="lb-sub" style={{ marginTop: 10, textAlign: "center", fontSize: 11 }}>
-          📍 {match.stadium}
+          📍 <strong style={{ color: "var(--fg2)", fontWeight: 700 }}>{match.stadium}</strong>
         </div>
       )}
       {t.saved && (
