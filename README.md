@@ -42,28 +42,56 @@ npm run dev
 npx vitest run
 ```
 
-## Produktion (Hetzner Cloud VM)
+## Produktion (Hetzner Cloud VM → tipp.dirkteu.de)
 
-Siehe Plan §15 für den ausführlichen Schritt-für-Schritt-Pfad. Kurzfassung:
+Voraussetzung: Hetzner-VM mit Ubuntu 22.04/24.04, DNS A-Record
+`tipp.dirkteu.de → <VM-IP>` ist gesetzt.
+
+### Erst-Deploy
 
 ```bash
-# Auf der VM (Ubuntu 22.04, Docker installiert):
-cd /opt
-git clone <repo> secret-squad && cd secret-squad
-cp .env.example .env && nano .env   # Production-Werte
+# 1. Auf der VM einloggen (SSH)
+ssh root@<VM-IP>
 
-docker compose up -d --build
-docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
-  -d secret-squad.de -d www.secret-squad.de \
-  --email dirkteu@gmail.com --agree-tos --no-eff-email
-docker compose restart nginx
+# 2. Docker + Compose-Plugin installieren
+apt-get update && apt-get install -y docker.io docker-compose-plugin git
+
+# 3. Repo holen
+cd /opt
+git clone <DEIN-GITHUB-REPO> secret-squad && cd secret-squad
+
+# 4. .env aus .env.example anlegen + ausfüllen
+cp .env.example .env
+nano .env
+# Wichtig: NEXT_PUBLIC_SITE_URL=https://tipp.dirkteu.de
+#          ADMIN_PASSWORD=...
+#          SUPABASE_* aus Supabase-Dashboard
+#          API_FOOTBALL_KEY (optional)
+
+# 5. Deploy-Script (macht Bootstrap-SSL automatisch)
+chmod +x deploy.sh
+./deploy.sh
 ```
+
+Das Script erkennt am Fehlen von `nginx/certbot/conf/live/tipp.dirkteu.de/`
+automatisch den Erst-Deploy, startet nginx im HTTP-only Bootstrap-Modus,
+holt das Zertifikat via certbot und schwenkt dann auf die HTTPS-Config.
 
 ### Updates
 
 ```bash
+cd /opt/secret-squad
 git pull
-docker compose build && docker compose up -d
+./deploy.sh                    # Cert bleibt, nur web + worker neu gebaut
+```
+
+### Logs / Status
+
+```bash
+docker compose ps
+docker compose logs -f web
+docker compose logs -f cron-worker
+docker compose logs -f nginx
 ```
 
 ## Architektur
