@@ -55,8 +55,17 @@ export default async function TippsPage() {
     };
   }
 
-  const championLockAt = configRes.data?.champion_lock_at ?? new Date(0).toISOString();
+  // Sperrfrist Weltmeister-Tipp: 5 Min vor dem fruehesten KO-Spiel,
+  // Fallback auf tournament_config falls noch keine KO-Spiele angelegt.
+  const koDates = matches
+    .filter((m) => m.round === "r32" || m.round === "r16")
+    .map((m) => new Date(m.match_date).getTime());
+  const firstKoMs = koDates.length > 0 ? Math.min(...koDates) : null;
+  const championLockAt = firstKoMs !== null
+    ? new Date(firstKoMs - 5 * 60_000).toISOString()
+    : configRes.data?.champion_lock_at ?? new Date(0).toISOString();
   const championLocked = new Date(championLockAt).getTime() <= now.getTime();
+  const championAlreadySet = champRes.data?.champion_team != null;
 
   return (
     <TippsClient
@@ -66,6 +75,7 @@ export default async function TippsPage() {
         championTip: champRes.data?.champion_team ?? null,
         championLocked,
         championLockAt,
+        championAlreadySet,
       }}
     />
   );

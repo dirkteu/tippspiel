@@ -13,9 +13,11 @@ export interface TippsInitial {
   championTip: string | null;
   championLocked: boolean;
   championLockAt: string;
+  championAlreadySet: boolean;
 }
 
-const SAVE_DEBOUNCE_MS = 600;
+const SAVE_DEBOUNCE_MS = 5000;
+const TOAST_THROTTLE_MS = 4000;
 
 export function TippsClient({ initial }: { initial: TippsInitial }) {
   const [state, setState] = useState<Record<string, TipState>>(() => {
@@ -36,6 +38,10 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
   // Pro Match-ID ein Debounce-Timer, damit +/− Klicks gebündelt werden.
   const matchTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const championTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Noch nicht persistierte Tipps — wird beim Tab-Close per sendBeacon geflusht.
+  const pending = useRef<Map<string, { tip_1: number; tip_2: number }>>(new Map());
+  const pendingChampion = useRef<string | null>(null);
+  const lastToastAt = useRef<number>(0);
 
   // Bei Unmount alle Timer aufräumen.
   useEffect(() => {
@@ -46,10 +52,45 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
     };
   }, []);
 
+  // Safety-Flush: Tab schließen oder in den Hintergrund schicken → noch pending
+  // markierte Tipps per navigator.sendBeacon nachsenden, damit nichts verloren geht.
+  useEffect(() => {
+    function flushPending() {
+      const tips = Array.from(pending.current, ([match_id, v]) => ({
+        match_id,
+        tip_1: v.tip_1,
+        tip_2: v.tip_2,
+      }));
+      const champion = pendingChampion.current;
+      if (tips.length === 0 && !champion) return;
+      const body: { tips: typeof tips; champion?: string } = { tips };
+      if (champion) body.champion = champion;
+      try {
+        const blob = new Blob([JSON.stringify(body)], { type: "application/json" });
+        navigator.sendBeacon("/api/tips/bulk", blob);
+      } catch {
+        /* ignore — Best-Effort beim Verlassen */
+      }
+    }
+    function onVisibility() {
+      if (document.visibilityState === "hidden") flushPending();
+    }
+    window.addEventListener("beforeunload", flushPending);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("beforeunload", flushPending);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
   const openMatches = initial.matches.filter((m) => !m.locked);
   const lockedMatches = initial.matches.filter((m) => m.locked);
 
   function showToast(msg: string) {
+    // Throttle: bei vielen Saves in Folge nur einmal pro 4 s einen Toast.
+    const now = Date.now();
+    if (now - lastToastAt.current < TOAST_THROTTLE_MS) return;
+    lastToastAt.current = now;
     setToast(msg);
     setTimeout(() => setToast(null), 1600);
   }
@@ -59,7 +100,9 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
       ...p,
       [id]: { tip_1: t.tip_1, tip_2: t.tip_2, saved: false, points: p[id]?.points ?? null },
     }));
-    // Debounced Auto-Save: jeden +/- Klick auf 600ms hinauszögern.
+    // Wert als pending markieren, damit der Safety-Flush ihn beim Tab-Close kennt.
+    pending.current.set(id, t);
+    // Debounced Auto-Save: jeden +/- Klick auf SAVE_DEBOUNCE_MS hinauszögern.
     const existing = matchTimers.current.get(id);
     if (existing) clearTimeout(existing);
     const handle = setTimeout(() => saveMatch(id, t), SAVE_DEBOUNCE_MS);
@@ -96,6 +139,7 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
         | undefined;
       if (res.ok && result?.ok) {
         setState((p) => ({ ...p, [id]: { ...p[id], saved: true } }));
+        pending.current.delete(id);
         showToast("Tipp gespeichert");
       } else {
         setErrors((p) => ({ ...p, [id]: result?.error ?? "Speichern fehlgeschlagen" }));
@@ -108,7 +152,8 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
   function setChampionDebounced(name: string) {
     setChampion(name);
     setSavedChampion(false);
-    if (initial.championLocked) return;
+    if (initial.championLocked || initial.championAlreadySet) return;
+    pendingChampion.current = name || null;
     if (championTimer.current) clearTimeout(championTimer.current);
     championTimer.current = setTimeout(() => saveChampion(name), SAVE_DEBOUNCE_MS);
   }
@@ -124,6 +169,7 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
       const json = await res.json();
       if (res.ok && json.champion?.ok) {
         setSavedChampion(true);
+        pendingChampion.current = null;
         showToast("Weltmeister-Tipp gespeichert");
       } else {
         showToast(json.champion?.error ?? "Weltmeister-Tipp fehlgeschlagen");
@@ -160,7 +206,7 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
           <select
             value={champion}
             onChange={(e) => setChampionDebounced(e.target.value)}
-            disabled={initial.championLocked}
+            disabled={initial.championLocked || initial.championAlreadySet}
           >
             <option value="">– wähle ein Team –</option>
             {WM2026_TEAMS.map((t) => (
@@ -170,9 +216,11 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
             ))}
           </select>
           <p className="t-small" style={{ marginTop: 8 }}>
-            {initial.championLocked
+            {initial.championAlreadySet
+              ? "Dein Weltmeister-Tipp ist final — kann nicht mehr geändert werden."
+              : initial.championLocked
               ? "Sperrfrist überschritten — dein Tipp ist fix."
-              : `Du kannst deinen Tipp bis ${new Date(initial.championLockAt).toLocaleString("de-DE")} ändern.`}
+              : `Du kannst deinen Tipp einmalig bis ${new Date(initial.championLockAt).toLocaleString("de-DE")} setzen.`}
           </p>
           {savedChampion && champion && (
             <div className="tip-flag"><Award size={15} /> Weltmeister-Tipp gespeichert</div>

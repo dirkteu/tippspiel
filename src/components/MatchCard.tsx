@@ -41,6 +41,8 @@ export function MatchCard({ match, tip, onChange, onEdit }: Props) {
   const lockedForEdit = t.saved && !match.locked;
   const disabled = match.locked || !onChange || lockedForEdit;
 
+  const showDirty = !t.saved && !match.locked && (t.tip_1 > 0 || t.tip_2 > 0);
+
   return (
     <div
       className={`card match${t.saved ? " saved" : ""}${lockedForEdit ? " readonly" : ""}`}
@@ -149,6 +151,20 @@ export function MatchCard({ match, tip, onChange, onEdit }: Props) {
               <Pencil size={12} /> Bearbeiten
             </button>
           )}
+        </div>
+      )}
+      {showDirty && (
+        <div
+          className="tip-flag"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            color: "var(--gold)",
+            background: "rgba(245,158,11,.10)",
+          }}
+        >
+          <span style={{ fontSize: 10 }}>●</span> ungespeichert
         </div>
       )}
     </div>

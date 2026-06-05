@@ -59,7 +59,7 @@ export default function RegelnPage() {
       <RuleRow
         points={10}
         title="Weltmeister"
-        body="Richtig getippt, wer am Ende den Pokal hochhält? +10 Punkte am Turnierende."
+        body="Richtig getippt, wer am Ende den Pokal hochhält? +10 Punkte am Turnierende. Du kannst deinen Weltmeister-Tipp NUR EINMAL setzen — und nur bis 5 Minuten vor dem ersten K.o.-Spiel."
         icon={<Trophy size={18} />}
         accent="var(--gold)"
       />
