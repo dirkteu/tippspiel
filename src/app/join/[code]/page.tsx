@@ -24,14 +24,16 @@ export default async function JoinPage({ params }: PageProps) {
 
   let teamName: string | null = null;
   let alreadyTeamNamed = false;
+  let isTeamNameOwner = false;
   if (profile.team_id) {
     const { data: team } = await sb
       .from("teams")
-      .select("team_name")
+      .select("team_name,team_name_owner_id")
       .eq("id", profile.team_id)
       .maybeSingle();
     teamName = team?.team_name ?? null;
     alreadyTeamNamed = !!team?.team_name;
+    isTeamNameOwner = team?.team_name_owner_id === profile.id;
   }
 
   return (
@@ -42,6 +44,7 @@ export default async function JoinPage({ params }: PageProps) {
           gender={profile.gender as "m" | "f"}
           teamName={teamName}
           alreadyTeamNamed={alreadyTeamNamed}
+          isTeamNameOwner={isTeamNameOwner}
         />
       </div>
     </div>

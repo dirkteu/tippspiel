@@ -43,6 +43,7 @@ interface RosterPlayer {
 interface Team {
   id: string;
   team_name: string | null;
+  team_name_owner_id: string | null;
 }
 
 interface Match {
@@ -736,20 +737,17 @@ function TeamsSection({
           const members = byTeam.get(t.id) ?? [];
           const m = members.find((x) => x.gender === "m");
           const f = members.find((x) => x.gender === "f");
+          const owner = members.find((x) => x.id === t.team_name_owner_id);
           return (
-            <div key={t.id} className="card pad" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span className="kicker">Team {i + 1}</span>
-                <span style={{ fontSize: 13, color: "var(--fg2)" }}>
-                  {t.team_name ?? <em style={{ color: "var(--fg4)" }}>noch ohne Namen</em>}
-                </span>
-              </div>
-              <div style={{ fontSize: 13, color: "var(--fg2)" }}>
-                ♂ {m?.real_name ?? "—"}{" "}
-                <span style={{ color: "var(--fg4)" }}>·</span>{" "}
-                ♀ {f?.real_name ?? "—"}
-              </div>
-            </div>
+            <TeamCard
+              key={t.id}
+              team={t}
+              idx={i + 1}
+              male={m}
+              female={f}
+              owner={owner}
+              onChange={onChange}
+            />
           );
         })}
         {teams.length === 0 && (
@@ -759,6 +757,127 @@ function TeamsSection({
         )}
       </div>
     </section>
+  );
+}
+
+function TeamCard({
+  team,
+  idx,
+  male,
+  female,
+  owner,
+  onChange,
+}: {
+  team: Team;
+  idx: number;
+  male: RosterPlayer | undefined;
+  female: RosterPlayer | undefined;
+  owner: RosterPlayer | undefined;
+  onChange: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [nameInput, setNameInput] = useState(team.team_name ?? "");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save() {
+    if (nameInput.trim().length < 2) {
+      setErr("Mindestens 2 Zeichen");
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/teams/${team.id}/name`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ team_name: nameInput.trim() }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setErr(j.error ?? "Speichern fehlgeschlagen");
+        return;
+      }
+      setEditing(false);
+      onChange();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card pad" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <span className="kicker">Team {idx}</span>
+        {!editing ? (
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ width: "auto", padding: "4px 10px", fontSize: 12 }}
+            onClick={() => {
+              setNameInput(team.team_name ?? "");
+              setEditing(true);
+              setErr(null);
+            }}
+          >
+            {team.team_name ? "ändern" : "Name setzen"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ width: "auto", padding: "4px 10px", fontSize: 12 }}
+            onClick={() => {
+              setEditing(false);
+              setErr(null);
+            }}
+          >
+            abbrechen
+          </button>
+        )}
+      </div>
+
+      {editing ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              className="field-input"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="Team-Name"
+              maxLength={40}
+              style={{ flex: 1 }}
+              autoFocus
+            />
+            <button
+              className="btn btn-primary"
+              style={{ width: "auto", padding: "8px 14px", fontSize: 13 }}
+              onClick={save}
+              disabled={busy || nameInput.trim().length < 2}
+            >
+              {busy ? "…" : <Check size={14} />}
+            </button>
+          </div>
+          {err && <p style={{ color: "var(--loss)", fontSize: 12, margin: 0 }}>{err}</p>}
+        </div>
+      ) : (
+        <div style={{ fontSize: 13, color: "var(--fg2)" }}>
+          {team.team_name ?? <em style={{ color: "var(--fg4)" }}>noch ohne Namen</em>}
+        </div>
+      )}
+
+      <div style={{ fontSize: 13, color: "var(--fg2)" }}>
+        ♂ {male?.real_name ?? "—"}{" "}
+        <span style={{ color: "var(--fg4)" }}>·</span>{" "}
+        ♀ {female?.real_name ?? "—"}
+      </div>
+      {!team.team_name && owner && (
+        <div style={{ fontSize: 11, color: "var(--fg4)" }}>
+          Namen-Vergeber:in: {owner.real_name}
+          {!owner.joined_at && " · noch nicht beigetreten"}
+        </div>
+      )}
+    </div>
   );
 }
 

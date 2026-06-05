@@ -82,6 +82,20 @@ export async function POST() {
         { status: 500 },
       );
     }
+
+    // Team-Namen-Vergeber:in auslosen (50/50 Mann oder Frau).
+    const ownerId = Math.random() < 0.5 ? pair.male.id : pair.female.id;
+    const ownerUpdate = await sb
+      .from("teams")
+      .update({ team_name_owner_id: ownerId })
+      .eq("id", team.id);
+    if (ownerUpdate.error) {
+      return NextResponse.json(
+        { error: "Owner-Zuordnung fehlgeschlagen: " + ownerUpdate.error.message },
+        { status: 500 },
+      );
+    }
+
     created.push({ teamId: team.id, male: pair.male.id, female: pair.female.id });
   }
 

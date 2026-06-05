@@ -40,7 +40,7 @@ export default async function AdminPage() {
   }
   const sb = supabaseService();
   const [teamsRes, matchesRes, configRes, rosterRes] = await Promise.all([
-    sb.from("teams").select("id,team_name").order("created_at", { ascending: false }),
+    sb.from("teams").select("id,team_name,team_name_owner_id").order("created_at", { ascending: false }),
     sb.from("matches").select("*").order("match_date", { ascending: true }),
     sb.from("tournament_config").select("*").eq("id", 1).maybeSingle(),
     sb

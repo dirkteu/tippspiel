@@ -90,14 +90,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "DB-Update fehlgeschlagen: " + updErr.message }, { status: 500 });
   }
 
-  // 6. Frau setzt Team-Namen (wenn noch leer)
-  if (profile.gender === "f" && team_name) {
+  // 6. Ausgeloste:r Team-Namen-Vergeber:in setzt den Namen (wenn noch leer).
+  if (team_name) {
     const { data: team } = await sb
       .from("teams")
-      .select("team_name")
+      .select("team_name,team_name_owner_id")
       .eq("id", profile.team_id)
       .maybeSingle();
-    if (!team?.team_name) {
+    if (!team?.team_name && team?.team_name_owner_id === profile.id) {
       await sb.from("teams").update({ team_name }).eq("id", profile.team_id);
     }
   }

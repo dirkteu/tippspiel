@@ -9,16 +9,17 @@ interface Props {
   gender: "m" | "f";
   teamName: string | null;
   alreadyTeamNamed: boolean;
+  isTeamNameOwner: boolean;
 }
 
-export function JoinForm({ code, gender, teamName, alreadyTeamNamed }: Props) {
+export function JoinForm({ code, gender, teamName, alreadyTeamNamed, isTeamNameOwner }: Props) {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [teamNameInput, setTeamNameInput] = useState(teamName ?? "");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const needsTeamName = gender === "f" && !alreadyTeamNamed;
+  const needsTeamName = isTeamNameOwner && !alreadyTeamNamed;
   const ready =
     username.trim().length >= 2 &&
     (!needsTeamName || teamNameInput.trim().length >= 2);
@@ -106,7 +107,8 @@ export function JoinForm({ code, gender, teamName, alreadyTeamNamed }: Props) {
             autoComplete="off"
           />
           <p className="t-small" style={{ marginTop: 6 }}>
-            Den Namen siehst nur du beim Anlegen — dein Nachbar sieht ihn ebenfalls,
+            Den Namen siehst nur du beim Anlegen —{" "}
+            {gender === "m" ? "deine Nachbarin" : "dein Nachbar"} sieht ihn ebenfalls,
             ohne deine Identität zu kennen.
           </p>
         </>
