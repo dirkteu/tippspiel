@@ -7,15 +7,23 @@
  */
 import cron from "node-cron";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://web:3000";
-const API_KEY = process.env.API_FOOTBALL_KEY;
-const CRON_SECRET = process.env.CRON_SECRET;
-const LEAGUE_ID = Number(process.env.API_FOOTBALL_LEAGUE_ID ?? 1); // 1 = World Cup
-const SEASON = Number(process.env.API_FOOTBALL_SEASON ?? 2026);
-const HEALTHCHECK_URL = process.env.HEALTHCHECK_URL; // optional
+// Bracket-Notation: umgeht Build-Time-Inlining im Worker-tsc-Output.
+const SITE_URL = process.env["NEXT_PUBLIC_SITE_URL"] ?? "http://web:3000";
+const API_KEY = process.env["API_FOOTBALL_KEY"];
+const CRON_SECRET = process.env["CRON_SECRET"];
+const LEAGUE_ID = Number(process.env["API_FOOTBALL_LEAGUE_ID"] ?? 1); // 1 = World Cup
+const SEASON = Number(process.env["API_FOOTBALL_SEASON"] ?? 2026);
+const HEALTHCHECK_URL = process.env["HEALTHCHECK_URL"]; // optional
 
-if (!API_KEY) throw new Error("API_FOOTBALL_KEY fehlt");
-if (!CRON_SECRET) throw new Error("CRON_SECRET fehlt");
+// Wenn keine API-Football-Credentials gesetzt sind: idle bleiben (kein Crash).
+// Ergebnisse können dann manuell via Admin-Panel eingetragen werden.
+if (!API_KEY || !CRON_SECRET) {
+  console.warn(
+    "[cron] API_FOOTBALL_KEY oder CRON_SECRET fehlt — Worker idle. Ergebnisse manuell pflegen.",
+  );
+  // Container am Leben halten ohne CPU zu verbraten
+  setInterval(() => {}, 1 << 30);
+}
 
 async function pollOnce() {
   const today = new Date().toISOString().slice(0, 10);
@@ -66,6 +74,6 @@ cron.schedule("*/5 * * * *", async () => {
   }
 });
 
-console.log("Secret Squad Cron-Worker läuft (alle 5 Min)");
+console.log("Bülser Alm Cron-Worker läuft (alle 5 Min)");
 // Initial-Lauf nicht warten
 pollOnce().catch(console.error);

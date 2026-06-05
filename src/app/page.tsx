@@ -42,7 +42,7 @@ export default async function WelcomePage() {
                   color: "var(--fg1)",
                 }}
               >
-                SECRET <span style={{ color: "var(--green-500)" }}>SQUAD</span>
+                BÜLSER <span style={{ color: "var(--green-500)" }}>ALM</span>
               </div>
               <p className="t-body" style={{ marginTop: 10, maxWidth: 280 }}>
                 Tippe die WM 2026 mit deinem geheimen Partner. Jeder Volltreffer
