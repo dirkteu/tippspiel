@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { AppBar } from "@/components/primitives/AppBar";
 import { Button } from "@/components/primitives/Button";
-import { MatchCard } from "@/components/MatchCard";
+import { MatchCard, type TipState } from "@/components/MatchCard";
 import { GroupStandingsTable } from "@/components/GroupStandingsTable";
 import { getSession } from "@/lib/auth";
 import {
@@ -10,8 +10,27 @@ import {
   fetchTipsForProfile,
   isLocked,
   roundLabel,
+  type MatchRow,
 } from "@/lib/matches";
 import { computeGroupStandings } from "@/lib/standings";
+
+type StoredTip = { tip_1: number; tip_2: number; points_earned: number };
+
+/**
+ * Baut den TipState für die MatchCard. Wichtig: Punkte werden nur dann
+ * gezeigt, wenn das Spiel auch wirklich ein Ergebnis hat — sonst steht
+ * der DB-Default 0 fälschlich als "Gewertet · 0 Pkt" da.
+ */
+function tipFor(m: MatchRow, stored: StoredTip | undefined): TipState | null {
+  if (!stored) return null;
+  const played = m.result_1 != null && m.result_2 != null;
+  return {
+    tip_1: stored.tip_1,
+    tip_2: stored.tip_2,
+    saved: true,
+    points: played ? stored.points_earned : null,
+  };
+}
 
 export default async function SpieltagPage() {
   const session = (await getSession())!;
@@ -19,13 +38,18 @@ export default async function SpieltagPage() {
     fetchAllMatches(),
     fetchTipsForProfile(session.profile.id),
   ]);
-  const tipByMatch = new Map(tips.map((t) => [t.match_id, t]));
+  const tipByMatch = new Map<string, StoredTip>(tips.map((t) => [t.match_id, t]));
   const now = new Date();
   const upcoming = matches
     .filter((m) => !isLocked(m, now))
     .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime());
   const next = upcoming[0] ?? null;
-  const restPreview = upcoming.slice(1, 3);
+
+  // Ungetippte offene Spiele — alles, was noch ein Tipp braucht.
+  const untipped = upcoming.filter((m) => !tipByMatch.has(m.id));
+  const untippedRest = next ? untipped.filter((m) => m.id !== next.id) : untipped;
+  const untippedRestPreview = untippedRest.slice(0, 3);
+
   const standings = computeGroupStandings(matches);
 
   return (
@@ -59,30 +83,38 @@ export default async function SpieltagPage() {
               stadium: next.stadium,
               locked: false,
             }}
-            tip={
-              tipByMatch.has(next.id)
-                ? {
-                    tip_1: tipByMatch.get(next.id)!.tip_1,
-                    tip_2: tipByMatch.get(next.id)!.tip_2,
-                    saved: true,
-                    points: tipByMatch.get(next.id)!.points_earned,
-                  }
-                : null
-            }
+            tip={tipFor(next, tipByMatch.get(next.id))}
           />
-          <Link href="/tipps" style={{ textDecoration: "none" }}>
-            <Button variant="primary">Alle Tipps abgeben</Button>
-          </Link>
+          {untipped.length > 0 ? (
+            <Link href="/tipps" style={{ textDecoration: "none" }}>
+              <Button variant="primary">
+                {untipped.length === 1
+                  ? "1 Tipp abgeben"
+                  : `${untipped.length} Tipps abgeben`}
+              </Button>
+            </Link>
+          ) : (
+            <div
+              className="tip-flag"
+              style={{
+                justifyContent: "center",
+                margin: "16px 0 4px",
+                fontSize: 13,
+              }}
+            >
+              <Check size={15} /> Alle Tipps abgegeben
+            </div>
+          )}
         </>
       )}
 
-      {restPreview.length > 0 && (
+      {untippedRestPreview.length > 0 && (
         <>
           <div className="section-head">
-            <span className="kicker">Weitere offene Spiele</span>
-            <span className="lb-sub">{upcoming.length - 1} offen</span>
+            <span className="kicker">Noch ungetippt</span>
+            <span className="lb-sub">{untippedRest.length} offen</span>
           </div>
-          {restPreview.map((m) => (
+          {untippedRestPreview.map((m) => (
             <MatchCard
               key={m.id}
               match={{
@@ -96,16 +128,7 @@ export default async function SpieltagPage() {
                 stadium: m.stadium,
                 locked: false,
               }}
-              tip={
-                tipByMatch.has(m.id)
-                  ? {
-                      tip_1: tipByMatch.get(m.id)!.tip_1,
-                      tip_2: tipByMatch.get(m.id)!.tip_2,
-                      saved: true,
-                      points: tipByMatch.get(m.id)!.points_earned,
-                    }
-                  : null
-              }
+              tip={tipFor(m, tipByMatch.get(m.id))}
             />
           ))}
         </>

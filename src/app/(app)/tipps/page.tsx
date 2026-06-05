@@ -44,7 +44,15 @@ export default async function TippsPage() {
   const tipsObj: TippsInitial["tips"] = {};
   for (const m of matches) {
     const t = tipsByMatch.get(m.id);
-    if (t) tipsObj[m.id] = { tip_1: t.tip_1, tip_2: t.tip_2, points: t.points_earned };
+    if (!t) continue;
+    // Nur wenn das Spiel auch wirklich ein Ergebnis hat, ist points_earned
+    // belastbar — sonst zeigt die UI fälschlich "Gewertet · 0 Pkt".
+    const played = m.result_1 != null && m.result_2 != null;
+    tipsObj[m.id] = {
+      tip_1: t.tip_1,
+      tip_2: t.tip_2,
+      points: played ? t.points_earned : null,
+    };
   }
 
   const championLockAt = configRes.data?.champion_lock_at ?? new Date(0).toISOString();
