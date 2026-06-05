@@ -662,14 +662,21 @@ function TeamsSection({
   onChange: () => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const someoneJoined = roster.some((p) => p.joined_at);
+  // Nur Spieler ohne Team können (neu) ausgewürfelt werden.
+  const pool = roster.filter((p) => !p.team_id && !p.joined_at);
+  const poolM = pool.filter((p) => p.gender === "m").length;
+  const poolF = pool.filter((p) => p.gender === "f").length;
+  const canDice = pool.length > 0 && poolM === poolF;
 
   async function dice() {
-    if (someoneJoined) {
-      alert("Mindestens ein Spieler ist bereits beigetreten — Würfeln gesperrt.");
+    if (!canDice) return;
+    if (
+      !confirm(
+        `${pool.length / 2} Paar(e) jetzt auswürfeln? Bestehende Teams bleiben unangetastet.`,
+      )
+    ) {
       return;
     }
-    if (!confirm("Spielteams jetzt neu auswürfeln?")) return;
     setBusy(true);
     try {
       const res = await fetch("/api/admin/teams/generate", { method: "POST" });
@@ -700,15 +707,24 @@ function TeamsSection({
           className="btn btn-secondary"
           style={{ width: "auto", padding: "8px 14px", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}
           onClick={dice}
-          disabled={busy || someoneJoined}
-          title={someoneJoined ? "Bereits jemand beigetreten — gesperrt" : ""}
+          disabled={busy || !canDice}
+          title={!canDice ? "Pool leer oder ungleich m/w" : ""}
         >
-          <Dice5 size={16} /> {busy ? "Würfle…" : "Auswürfeln"}
+          <Dice5 size={16} />{" "}
+          {busy ? "Würfle…" : pool.length > 0 ? `Auswürfeln (${pool.length / 2})` : "Auswürfeln"}
         </button>
       </div>
-      {someoneJoined && (
+      {pool.length === 0 ? (
         <p className="t-small" style={{ color: "var(--fg4)", marginBottom: 8 }}>
-          Mindestens ein Spieler ist beigetreten — neues Würfeln ist gesperrt.
+          Alle Spieler sind bereits in Teams.
+        </p>
+      ) : !canDice ? (
+        <p className="t-small" style={{ color: "var(--loss)", marginBottom: 8 }}>
+          Ungleicher Pool: {poolM} Männer / {poolF} Frauen — bitte ausgleichen.
+        </p>
+      ) : (
+        <p className="t-small" style={{ color: "var(--fg4)", marginBottom: 8 }}>
+          {pool.length / 2} freie(s) Paar(e) im Pool — bestehende Teams bleiben.
         </p>
       )}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

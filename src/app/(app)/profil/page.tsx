@@ -71,10 +71,22 @@ export default async function ProfilPage() {
             style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
           />
         </div>
-        <div className="partner-name" style={{ fontSize: 22 }}>{session.profile.username}</div>
-        <span className="t-small">
-          Team: {session.team.team_name ?? "(unbenannt)"} · {session.profile.gender === "f" ? "Frau" : "Mann"}
-        </span>
+        <span className="kicker">Dein Pseudonym</span>
+        <div className="partner-name" style={{ fontSize: 22, marginTop: -4 }}>
+          {session.profile.username ?? "(noch keins)"}
+        </div>
+        {/* Team-Name ist Spoiler: Frau hat ihn vergeben + Mann darf nicht
+            schließen, wer es ist. Erst nach 9/9 Kacheln verraten. */}
+        {tilesOpen >= 9 ? (
+          <span className="t-small">
+            Team: {session.team.team_name ?? "(unbenannt)"} ·{" "}
+            {session.profile.gender === "f" ? "Frau" : "Mann"}
+          </span>
+        ) : (
+          <span className="t-small">
+            {session.profile.gender === "f" ? "Frau" : "Mann"} im Squad
+          </span>
+        )}
       </div>
 
       <div className="stats" style={{ marginTop: 8 }}>

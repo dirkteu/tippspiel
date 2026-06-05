@@ -3,32 +3,49 @@ import { supabaseService } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin-auth";
 import { generatePairings, type RosterPlayer } from "@/lib/pairing";
 
-/** Spielteams würfeln. Erfordert: kein Spieler darf bereits beigetreten sein. */
+/**
+ * Spielteams würfeln.
+ *
+ * Verhalten:
+ * - Nur Spieler ohne team_id und ohne joined_at werden in NEUE Teams gewürfelt.
+ * - Bestehende Teams bleiben unangetastet (egal ob ihre Mitglieder schon
+ *   beigetreten sind oder nicht).
+ * - Voraussetzung: gleich viele freie Männer + Frauen im Pool.
+ */
 export async function POST() {
   if (!(await isAdmin())) return NextResponse.json({ error: "Verboten" }, { status: 403 });
   const sb = supabaseService();
 
-  // 1. Roster laden
-  const { data: roster, error: rosterErr } = await sb
+  // 1. Nur den freien Pool laden (kein Team, noch nicht beigetreten)
+  const { data: pool, error: poolErr } = await sb
     .from("profiles")
-    .select("id,real_name,gender,real_partner_id,joined_at");
-  if (rosterErr) return NextResponse.json({ error: rosterErr.message }, { status: 500 });
+    .select("id,real_name,gender,real_partner_id,joined_at")
+    .is("team_id", null)
+    .is("joined_at", null);
+  if (poolErr) return NextResponse.json({ error: poolErr.message }, { status: 500 });
 
-  if ((roster ?? []).some((p) => p.joined_at)) {
+  if (!pool || pool.length === 0) {
     return NextResponse.json(
-      { error: "Mindestens ein Spieler ist bereits beigetreten — Re-Würfeln blockiert" },
+      { error: "Alle Spieler sind bereits einem Team zugeordnet — nichts zu würfeln." },
       { status: 409 },
     );
   }
 
-  // 2. Bisherige Teams löschen (sind leer, weil noch niemand beigetreten ist)
-  await sb.from("profiles").update({ team_id: null }).is("joined_at", null);
-  await sb.from("teams").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  const m = pool.filter((p) => p.gender === "m").length;
+  const f = pool.filter((p) => p.gender === "f").length;
+  if (m !== f) {
+    return NextResponse.json(
+      {
+        error: `Ungleicher Pool: ${m} Männer / ${f} Frauen. Füge Spieler hinzu oder lösche welche, damit die Anzahl gleich ist.`,
+      },
+      { status: 409 },
+    );
+  }
 
-  // 3. Paarungen würfeln
+  // 2. Paarungen würfeln (nur freier Pool, bestehende Teams bleiben)
   let pairings;
   try {
-    pairings = generatePairings(roster as RosterPlayer[]);
+    pairings = generatePairings(pool as RosterPlayer[]);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
