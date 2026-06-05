@@ -37,7 +37,10 @@ if [ ! -f "$CERT_PATH" ]; then
   sleep 5
 
   echo "▶ Zertifikat anfordern …"
-  docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
+  # WICHTIG: --entrypoint überschreibt den Renew-Loop aus docker-compose.yml,
+  # sonst ignoriert der Container die certonly-Args und schläft 12h.
+  docker compose run --rm --entrypoint certbot certbot \
+    certonly --webroot -w /var/www/certbot \
     -d "$DOMAIN" \
     --email "$EMAIL" --agree-tos --no-eff-email
 
