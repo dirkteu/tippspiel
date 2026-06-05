@@ -1,6 +1,11 @@
-import { ShieldHalf } from "lucide-react";
+import Link from "next/link";
+import { Info, ShieldHalf } from "lucide-react";
 import type { ReactNode } from "react";
 
+/**
+ * Standard-AppBar. Wenn keine eigene Action angegeben, zeigt sie automatisch
+ * den Info-Button (Link zu /regeln) — damit Regelseite überall erreichbar.
+ */
 export function AppBar({ action }: { action?: ReactNode }) {
   return (
     <div className="appbar">
@@ -9,10 +14,14 @@ export function AppBar({ action }: { action?: ReactNode }) {
           <ShieldHalf size={17} color="#fff" />
         </div>
         <span className="brand-name">
-          SECRET <em>SQUAD</em>
+          BÜLSER <em>ALM</em>
         </span>
       </div>
-      {action}
+      {action ?? (
+        <Link href="/regeln" className="icon-btn" aria-label="Tipp-Regeln">
+          <Info size={19} />
+        </Link>
+      )}
     </div>
   );
 }

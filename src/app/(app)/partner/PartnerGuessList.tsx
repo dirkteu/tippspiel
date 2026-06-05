@@ -10,12 +10,16 @@ interface Candidate {
 
 interface Props {
   candidates: Candidate[];
+  /** Wenn bereits in der DB als aufgelöst markiert: Pseudonym sofort zeigen, kein Konfetti */
+  alreadyRevealed?: string | null;
 }
 
-export function PartnerGuessList({ candidates }: Props) {
+export function PartnerGuessList({ candidates, alreadyRevealed = null }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [tried, setTried] = useState<Set<string>>(new Set());
-  const [revealed, setRevealed] = useState<{ id: string; username: string } | null>(null);
+  const [revealed, setRevealed] = useState<{ id: string; username: string } | null>(
+    alreadyRevealed ? { id: "", username: alreadyRevealed } : null,
+  );
   const [confetti, setConfetti] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 

@@ -818,7 +818,6 @@ function MatchCard({ match, onChange }: { match: Match; onChange: () => void }) 
   const [r1, setR1] = useState<string>(match.result_1 == null ? "" : String(match.result_1));
   const [r2, setR2] = useState<string>(match.result_2 == null ? "" : String(match.result_2));
   const [savingResult, setSavingResult] = useState(false);
-  const [removing, setRemoving] = useState(false);
   const dirty =
     r1 !== (match.result_1 == null ? "" : String(match.result_1)) ||
     r2 !== (match.result_2 == null ? "" : String(match.result_2));
@@ -843,21 +842,6 @@ function MatchCard({ match, onChange }: { match: Match; onChange: () => void }) 
       onChange();
     } finally {
       setSavingResult(false);
-    }
-  }
-
-  async function removeMatch() {
-    if (!confirm(`${match.team_1} – ${match.team_2} wirklich löschen?`)) return;
-    setRemoving(true);
-    try {
-      const res = await fetch(`/api/admin/matches/${match.id}`, { method: "DELETE" });
-      if (!res.ok) {
-        alert("Löschen fehlgeschlagen");
-        return;
-      }
-      onChange();
-    } finally {
-      setRemoving(false);
     }
   }
 
@@ -926,7 +910,7 @@ function MatchCard({ match, onChange }: { match: Match; onChange: () => void }) 
         </button>
       </div>
 
-      {/* Footer: Löschen + Lock-Status */}
+      {/* Footer: Lock-Status (Spiele werden absichtlich nicht gelöscht) */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         {match.locked_at && new Date(match.locked_at) < new Date() ? (
           <span className="locked-pill"><Lock size={11} /> gesperrt</span>
@@ -935,14 +919,6 @@ function MatchCard({ match, onChange }: { match: Match; onChange: () => void }) 
             sperrt {match.locked_at ? fmtDateTime(match.locked_at) : "—"}
           </span>
         )}
-        <button
-          className="btn btn-ghost"
-          style={{ width: "auto", padding: "6px 10px", fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}
-          onClick={removeMatch}
-          disabled={removing}
-        >
-          <Trash2 size={12} /> Löschen
-        </button>
       </div>
     </div>
   );

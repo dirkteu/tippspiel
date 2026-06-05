@@ -87,6 +87,14 @@ export async function fetchTeamMemberIds(teamId: string): Promise<string[]> {
   return (data ?? []).map((p) => p.id);
 }
 
-export function isLocked(m: Pick<MatchRow, "locked_at">, now: Date = new Date()): boolean {
+/**
+ * Tipp ist gesperrt wenn entweder die Sperrfrist (5 Min vor Anpfiff)
+ * überschritten ist ODER beide Ergebnisse bereits eingetragen sind.
+ */
+export function isLocked(
+  m: Pick<MatchRow, "locked_at" | "result_1" | "result_2">,
+  now: Date = new Date(),
+): boolean {
+  if (m.result_1 != null && m.result_2 != null) return true;
   return new Date(m.locked_at).getTime() <= now.getTime();
 }

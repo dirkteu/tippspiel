@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { Info } from "lucide-react";
 import { AppBar } from "@/components/primitives/AppBar";
 import { PartnerTile } from "@/components/PartnerTile";
 import { getSession } from "@/lib/auth";
@@ -14,12 +12,21 @@ export default async function PartnerPage() {
   const partnerGender = session.profile.gender === "m" ? "f" : "m";
 
   const sb = supabaseService();
-  const { data: partner } = await sb
-    .from("profiles")
-    .select("id,username")
-    .eq("team_id", session.team.id)
-    .eq("gender", partnerGender)
-    .maybeSingle();
+  const [partnerRes, meRes] = await Promise.all([
+    sb
+      .from("profiles")
+      .select("id,username")
+      .eq("team_id", session.team.id)
+      .eq("gender", partnerGender)
+      .maybeSingle(),
+    sb
+      .from("profiles")
+      .select("partner_revealed_at")
+      .eq("id", session.profile.id)
+      .maybeSingle(),
+  ]);
+  const partner = partnerRes.data;
+  const alreadyRevealed = !!meRes.data?.partner_revealed_at;
 
   const [matches, tips, candidatesRes] = await Promise.all([
     fetchAllMatches(),
@@ -47,15 +54,14 @@ export default async function PartnerPage() {
     })),
   );
 
+  // Sobald aufgelöst (= entweder alle Kacheln offen oder erfolgreiches
+  // Raten in der Vergangenheit) → Pseudonym freigeben.
+  const revealedName =
+    partner && (open >= 9 || alreadyRevealed) ? partner.username : null;
+
   return (
     <div className="scroll">
-      <AppBar
-        action={
-          <Link href="/regeln" className="icon-btn" aria-label="Tipp-Regeln">
-            <Info size={19} />
-          </Link>
-        }
-      />
+      <AppBar />
       <span className="kicker">Dein geheimer Partner</span>
       <h1 className="h1" style={{ marginTop: 4 }}>Wer ist es?</h1>
       <p className="t-small" style={{ marginTop: 6, marginBottom: 18 }}>
@@ -68,7 +74,7 @@ export default async function PartnerPage() {
           photoSrc="/api/avatar/partner"
           tileOrder={session.team.tile_order}
           tilesOpen={open}
-          revealedName={open >= 9 ? partner.username : null}
+          revealedName={revealedName}
         />
       ) : (
         <div className="card pad">
@@ -80,7 +86,12 @@ export default async function PartnerPage() {
         </div>
       )}
 
-      {candidates.length > 0 && <PartnerGuessList candidates={candidates} />}
+      {candidates.length > 0 && (
+        <PartnerGuessList
+          candidates={candidates}
+          alreadyRevealed={alreadyRevealed ? (partner?.username ?? null) : null}
+        />
+      )}
     </div>
   );
 }

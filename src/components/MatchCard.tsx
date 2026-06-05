@@ -51,7 +51,12 @@ export function MatchCard({ match, tip, onChange, onEdit }: Props) {
             {match.meta_primary}
           </strong>
           {match.meta_secondary && (
-            <> · {match.meta_secondary}</>
+            <>
+              {" · "}
+              <strong style={{ color: "var(--fg2)", fontWeight: 700 }}>
+                {match.meta_secondary}
+              </strong>
+            </>
           )}
         </span>
         {match.locked ? (

@@ -19,8 +19,8 @@ const oswald = Oswald({
 });
 
 export const metadata: Metadata = {
-  title: "Secret Squad",
-  description: "Anonymes Zweier-Team Tippspiel zur FIFA WM 2026",
+  title: "Bülser Alm",
+  description: "Tippspiel zur FIFA WM 2026",
 };
 
 export const viewport: Viewport = {

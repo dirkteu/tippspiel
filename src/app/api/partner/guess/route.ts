@@ -42,6 +42,17 @@ export async function POST(req: Request) {
   }
 
   const correct = realPartner.id === guessed_profile_id;
+
+  // Bei Treffer: Zeitstempel speichern, damit die Auflösung nach
+  // Reload bestehen bleibt.
+  if (correct) {
+    await sb
+      .from("profiles")
+      .update({ partner_revealed_at: new Date().toISOString() })
+      .eq("id", session.profile.id)
+      .is("partner_revealed_at", null); // Idempotent: nur beim ersten Mal setzen
+  }
+
   return NextResponse.json({
     correct,
     revealed_name: correct ? realPartner.username : null,
