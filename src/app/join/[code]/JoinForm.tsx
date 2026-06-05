@@ -68,14 +68,13 @@ export function JoinForm({ code, gender, teamName, alreadyTeamNamed, isTeamNameO
         <ArrowLeft size={19} />
       </button>
       <span className="kicker" style={{ marginTop: 22 }}>
-        Squad beitreten · {gender === "f" ? "Frau" : "Mann"}
+        Spiel beitreten · {gender === "f" ? "Frau" : "Mann"}
       </span>
       <h1 className="h1" style={{ marginTop: 6 }}>
-        {gender === "f" ? "Willkommen in der Squad" : "Tritt deiner Squad bei"}
+        Tritt dem Tipp Spiel bei.
       </h1>
       <p className="t-small" style={{ marginTop: 8, marginBottom: 26 }}>
-        Wähle ein Pseudonym{needsTeamName ? " und einen Team-Namen" : ""} — fertig.
-        Dein Foto bekommt der Admin schon vom Spielleiter.
+        Lege dein Pseudonym{needsTeamName ? " und einen Team-Namen" : ""} fest.
       </p>
 
       {teamName && (
@@ -106,11 +105,6 @@ export function JoinForm({ code, gender, teamName, alreadyTeamNamed, isTeamNameO
             maxLength={40}
             autoComplete="off"
           />
-          <p className="t-small" style={{ marginTop: 6 }}>
-            Den Namen siehst nur du beim Anlegen —{" "}
-            {gender === "m" ? "deine Nachbarin" : "dein Nachbar"} sieht ihn ebenfalls,
-            ohne deine Identität zu kennen.
-          </p>
         </>
       )}
 
