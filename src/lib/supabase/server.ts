@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import "server-only";
+import { readEnv } from "@/lib/env";
 
 let cached: SupabaseClient | null = null;
 
@@ -9,9 +10,8 @@ let cached: SupabaseClient | null = null;
  */
 export function supabaseService(): SupabaseClient {
   if (cached) return cached;
-  // Bracket-Notation umgeht Next.js Build-Time-Inlining.
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  const url = readEnv("SUPABASE_URL");
+  const key = readEnv("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) {
     throw new Error(
       "SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY müssen in .env gesetzt sein",

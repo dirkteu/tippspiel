@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { readEnv } from "@/lib/env";
 
 /**
  * Cookie-Pfad-Migration: liest sq_admin (alter path=/admin) und re-setzt ihn
@@ -7,7 +8,7 @@ import { cookies } from "next/headers";
  * Dieser Pfad startet mit /admin, daher wird der alte Cookie noch gesendet.
  */
 export async function GET() {
-  const expected = process.env["ADMIN_PASSWORD"];
+  const expected = readEnv("ADMIN_PASSWORD");
   if (!expected) {
     return NextResponse.json({ error: "Admin nicht konfiguriert" }, { status: 500 });
   }
