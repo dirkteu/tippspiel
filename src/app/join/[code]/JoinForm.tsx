@@ -77,13 +77,6 @@ export function JoinForm({ code, gender, teamName, alreadyTeamNamed, isTeamNameO
         Lege dein Pseudonym{needsTeamName ? " und einen Team-Namen" : ""} fest.
       </p>
 
-      {teamName && (
-        <div className="card pad" style={{ marginBottom: 16 }}>
-          <span className="kicker">Dein Team</span>
-          <div className="lb-name" style={{ marginTop: 4 }}>{teamName}</div>
-        </div>
-      )}
-
       <label className="kicker" style={{ marginBottom: 8 }}>Pseudonym</label>
       <input
         className="field-input"
