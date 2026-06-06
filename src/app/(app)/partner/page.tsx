@@ -21,12 +21,13 @@ export default async function PartnerPage() {
       .maybeSingle(),
     sb
       .from("profiles")
-      .select("partner_revealed_at")
+      .select("partner_revealed_at,wrong_partner_guesses")
       .eq("id", session.profile.id)
       .maybeSingle(),
   ]);
   const partner = partnerRes.data;
   const alreadyRevealed = !!meRes.data?.partner_revealed_at;
+  const wrongGuesses = meRes.data?.wrong_partner_guesses ?? 0;
 
   const [matches, tips, candidatesRes] = await Promise.all([
     fetchAllMatches(),
@@ -60,10 +61,14 @@ export default async function PartnerPage() {
     })),
   );
 
+  // Strafkachel: jeder falsche Versuch zieht eine offene Kachel ab.
+  // Cap auf 0, damit nichts ins Negative laeuft.
+  const effectiveOpen = Math.max(0, open - wrongGuesses);
+
   // Sobald aufgelöst (= entweder alle Kacheln offen oder erfolgreiches
   // Raten in der Vergangenheit) → Pseudonym freigeben.
   const revealedName =
-    partner && (open >= 9 || alreadyRevealed) ? partner.username : null;
+    partner && (effectiveOpen >= 9 || alreadyRevealed) ? partner.username : null;
 
   return (
     <div className="scroll">
@@ -74,15 +79,15 @@ export default async function PartnerPage() {
       <h1 className="h1" style={{ marginTop: 4 }}>Wer ist es?</h1>
       <p className="t-small" style={{ marginTop: 6, marginBottom: 18 }}>
         Jedes gewertete Vorrundenspiel deckt eine Kachel auf. Volltreffer
-        (≥3 Punkte) deines Teams bringen je eine weitere. Errätst du es
-        richtig, fallen alle.
+        (≥3 Punkte) deines Teams bringen je eine weitere. Daneben getippt?
+        Eine Kachel kommt zurück. Errätst du es richtig, fallen alle.
       </p>
 
       {partner ? (
         <PartnerTile
           photoSrc="/api/avatar/partner"
           tileOrder={session.team.tile_order}
-          tilesOpen={open}
+          tilesOpen={effectiveOpen}
           revealedName={revealedName}
         />
       ) : (

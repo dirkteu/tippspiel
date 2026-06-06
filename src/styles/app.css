@@ -102,11 +102,33 @@ body{
    die Lücken; statt sichtbarer Trennlinien malen wir mit box-shadow inset
    eine 1px-Hairline pro Kachel. */
 .grid3 .tiles{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:0}
-.grid3 .tile{box-shadow:inset 0 0 0 1px rgba(15,23,42,.35)}
-.tile{background:var(--tile);cursor:pointer;transition:opacity var(--dur-slow) var(--ease-out),transform var(--dur-slow) var(--ease-out);
-  display:flex;align-items:center;justify-content:center;color:var(--fg4)}
-.tile svg{width:18px;height:18px;opacity:.5}
+.grid3 .tile{box-shadow:inset 0 0 0 1px rgba(15,23,42,.45)}
+/* Logo-Puzzle: jede Kachel zeigt 1/9 des Logos, beim Aufdecken fällt das
+   Slice weg und das Foto darunter wird sichtbar. */
+.tile{background-color:var(--tile);background-image:url('/logo.png');background-repeat:no-repeat;background-size:300% 300%;
+  cursor:pointer;transition:opacity var(--dur-slow) var(--ease-out),transform var(--dur-slow) var(--ease-out)}
+.grid3 .tiles > .tile:nth-child(1){background-position:0% 0%}
+.grid3 .tiles > .tile:nth-child(2){background-position:50% 0%}
+.grid3 .tiles > .tile:nth-child(3){background-position:100% 0%}
+.grid3 .tiles > .tile:nth-child(4){background-position:0% 50%}
+.grid3 .tiles > .tile:nth-child(5){background-position:50% 50%}
+.grid3 .tiles > .tile:nth-child(6){background-position:100% 50%}
+.grid3 .tiles > .tile:nth-child(7){background-position:0% 100%}
+.grid3 .tiles > .tile:nth-child(8){background-position:50% 100%}
+.grid3 .tiles > .tile:nth-child(9){background-position:100% 100%}
 .tile.open{opacity:0;transform:scale(.55);pointer-events:none}
+
+/* ---- Auflösen-Liste ---- */
+.guess-list{padding:0;overflow:hidden}
+.guess-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;
+  padding:14px 16px;background:transparent;border:0;cursor:pointer;color:var(--fg1);
+  font-size:15px;font-family:inherit;text-align:left;transition:background var(--dur-fast) var(--ease-out)}
+.guess-row + .guess-row{border-top:1px solid var(--border-soft)}
+.guess-row:hover:not(:disabled),.guess-row:focus-visible:not(:disabled){background:rgba(255,255,255,.04);outline:none}
+.guess-row:disabled{opacity:.5;cursor:default}
+.guess-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.guess-miss{display:inline-flex;align-items:center;gap:4px;color:var(--loss);font-size:12px}
+.guess-busy{color:var(--fg3);font-size:14px}
 .progress{width:100%;height:6px;border-radius:999px;background:var(--surface-2);overflow:hidden}
 .progress i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width var(--dur-slow) var(--ease-out)}
 .partner-name{font-family:var(--font-display);font-weight:700;font-size:22px;color:var(--fg1)}

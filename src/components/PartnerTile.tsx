@@ -1,4 +1,3 @@
-import { Lock } from "lucide-react";
 import { openTilePositions } from "@/lib/tiles";
 
 interface Props {
@@ -21,9 +20,7 @@ export function PartnerTile({ photoSrc, tileOrder, tilesOpen, revealedName }: Pr
         <img src={photoSrc} alt="" className="photo" style={{ objectFit: "cover" }} />
         <div className="tiles">
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className={`tile${open.has(i) ? " open" : ""}`}>
-              <Lock size={18} />
-            </div>
+            <div key={i} className={`tile${open.has(i) ? " open" : ""}`} />
           ))}
         </div>
       </div>

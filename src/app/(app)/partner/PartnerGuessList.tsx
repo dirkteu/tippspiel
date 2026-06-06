@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, X } from "lucide-react";
 import { Confetti } from "@/components/Confetti";
 
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function PartnerGuessList({ candidates, alreadyRevealed = null, partnerGender }: Props) {
+  const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [tried, setTried] = useState<Set<string>>(new Set());
   const [revealed, setRevealed] = useState<{ id: string; username: string } | null>(
@@ -23,11 +25,13 @@ export function PartnerGuessList({ candidates, alreadyRevealed = null, partnerGe
   );
   const [confetti, setConfetti] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
 
   async function guess(c: Candidate) {
     if (revealed || busy) return;
     setBusy(c.id);
     setErrorMsg(null);
+    setHint(null);
     try {
       const res = await fetch("/api/partner/guess", {
         method: "POST",
@@ -42,8 +46,13 @@ export function PartnerGuessList({ candidates, alreadyRevealed = null, partnerGe
       if (json.correct) {
         setRevealed({ id: c.id, username: json.revealed_name ?? "" });
         setConfetti(true);
+        // Server-Render erneuern, damit Kacheln/Bild voll sichtbar werden.
+        router.refresh();
       } else {
         setTried((p) => new Set(p).add(c.id));
+        setHint("Daneben — eine Kachel kommt zurück.");
+        // Kacheln im Hintergrund neu rendern (effectiveOpen sinkt).
+        router.refresh();
       }
     } finally {
       setBusy(null);
@@ -83,54 +92,35 @@ export function PartnerGuessList({ candidates, alreadyRevealed = null, partnerGe
         ) : (
           <>
             <p className="t-small" style={{ marginBottom: 12 }}>
-              Wer von den Kandidat·innen ist es? Tippe auf „Auflösen&ldquo;.
-              Bei Treffer gibt&apos;s Konfetti.
+              Wer ist es? Tippe auf einen Namen. Bei Treffer gibt&apos;s Konfetti,
+              daneben kostet eine Kachel.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="card guess-list">
               {candidates.map((c) => {
                 const wasWrong = tried.has(c.id);
                 return (
-                  <div
+                  <button
                     key={c.id}
-                    className="card pad"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "12px 14px",
-                      opacity: wasWrong ? 0.5 : 1,
-                    }}
+                    type="button"
+                    className="guess-row"
+                    onClick={() => guess(c)}
+                    disabled={wasWrong || busy === c.id}
                   >
-                    <span style={{ flex: 1, color: "var(--fg1)", fontSize: 15 }}>
-                      {c.real_name}
-                    </span>
+                    <span className="guess-name">{c.real_name}</span>
                     {wasWrong ? (
-                      <span
-                        style={{
-                          color: "var(--loss)",
-                          fontSize: 12,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
-                        }}
-                      >
+                      <span className="guess-miss">
                         <X size={14} /> daneben
                       </span>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ width: "auto", padding: "8px 14px", fontSize: 13 }}
-                        onClick={() => guess(c)}
-                        disabled={busy === c.id}
-                      >
-                        {busy === c.id ? "…" : "Auflösen"}
-                      </button>
-                    )}
-                  </div>
+                    ) : busy === c.id ? (
+                      <span className="guess-busy">…</span>
+                    ) : null}
+                  </button>
                 );
               })}
             </div>
+            {hint && (
+              <p style={{ color: "var(--gold)", fontSize: 13, marginTop: 10 }}>{hint}</p>
+            )}
             {errorMsg && (
               <p style={{ color: "var(--loss)", fontSize: 13, marginTop: 8 }}>{errorMsg}</p>
             )}
