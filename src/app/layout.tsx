@@ -19,8 +19,36 @@ const oswald = Oswald({
 });
 
 export const metadata: Metadata = {
-  title: "Bülser Alm",
-  description: "Tippspiel zur FIFA WM 2026",
+  metadataBase: new URL("https://tipp.dirkteu.de"),
+  title: "Bülser Alm — Tippspiel",
+  description: "Tippspiel zur FIFA WM 2026 mit geheimer Tipp-Nachbarschaft.",
+  openGraph: {
+    title: "Bülser Alm — Tippspiel",
+    description:
+      "Tippe alle Spiele der FIFA WM 2026 mit geheimer Nachbarschaft. Wer ist deine Tipp-Nachbar:in?",
+    url: "https://tipp.dirkteu.de",
+    siteName: "Bülser Alm",
+    images: [
+      {
+        url: "/logo.png",
+        width: 512,
+        height: 519,
+        alt: "Bülser Alm Logo",
+      },
+    ],
+    locale: "de_DE",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Bülser Alm — Tippspiel",
+    description: "Tippspiel zur FIFA WM 2026 mit geheimer Tipp-Nachbarschaft.",
+    images: ["/logo.png"],
+  },
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export const viewport: Viewport = {
