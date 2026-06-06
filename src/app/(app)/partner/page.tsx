@@ -110,7 +110,7 @@ export default async function PartnerPage() {
       {candidates.length > 0 && (
         <PartnerGuessList
           candidates={candidates}
-          alreadyRevealed={alreadyRevealed ? (partner?.username ?? null) : null}
+          isRevealed={alreadyRevealed || tilesOpenForDisplay >= 9}
           partnerGender={partnerGender}
           teamName={session.team.team_name}
           partnerPseudonym={partner?.username ?? null}

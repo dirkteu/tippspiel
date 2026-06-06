@@ -11,8 +11,11 @@ interface Candidate {
 
 interface Props {
   candidates: Candidate[];
-  /** Wenn bereits in der DB als aufgelöst markiert: Pseudonym sofort zeigen, kein Konfetti */
-  alreadyRevealed?: string | null;
+  /** Bereits aufgeloest — entweder per Treffer (partner_revealed_at)
+   *  oder weil alle 9 Kacheln durch Trigger gefallen sind und das Foto
+   *  voll sichtbar ist. In beiden Faellen wird die Treffer-Box gezeigt
+   *  und die Auswahlliste ausgeblendet. */
+  isRevealed?: boolean;
   partnerGender: "m" | "f";
   /** Name des Teams (von beiden Mitgliedern gemeinsam vergeben). */
   teamName: string | null;
@@ -22,7 +25,7 @@ interface Props {
 
 export function PartnerGuessList({
   candidates,
-  alreadyRevealed = null,
+  isRevealed = false,
   partnerGender,
   teamName,
   partnerPseudonym,
@@ -30,9 +33,8 @@ export function PartnerGuessList({
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [tried, setTried] = useState<Set<string>>(new Set());
-  const [revealed, setRevealed] = useState<{ id: string; username: string } | null>(
-    alreadyRevealed ? { id: "", username: alreadyRevealed } : null,
-  );
+  const [revealedLocal, setRevealedLocal] = useState<boolean>(false);
+  const revealed = isRevealed || revealedLocal;
   const [confetti, setConfetti] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export function PartnerGuessList({
         return;
       }
       if (json.correct) {
-        setRevealed({ id: c.id, username: json.revealed_name ?? "" });
+        setRevealedLocal(true);
         setConfetti(true);
         // Server-Render erneuern, damit Kacheln/Bild voll sichtbar werden.
         router.refresh();
