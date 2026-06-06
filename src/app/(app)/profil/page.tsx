@@ -28,7 +28,7 @@ export default async function ProfilPage() {
   const volltreffer = (tipsResp.data ?? []).filter((t) => t.points_earned >= 3).length;
 
   const tilesOpen = tilesUnlocked(
-    { member_profile_ids: memberIds },
+    session.profile.id,
     matches.map((m) => ({
       id: m.id,
       round: m.round,

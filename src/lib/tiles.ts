@@ -1,23 +1,23 @@
 /**
  * Kachel-Freischalt-Logik (3×3 Secret Partner Grid).
  *
- * 9 Kacheln werden im Lauf der WM-Vorrunde freigeschaltet:
+ * Wird pro SPIELER berechnet — beide Team-Mitglieder haben unabhängige
+ * Fortschritte (die Bonus-Kachel ist persönlich).
  *
  *  - **Basis-Kachel (max. 6):** Pro gewertetem Vorrundenspiel (Admin hat
  *    result_1 / result_2 eingetragen) fällt eine Kachel. Es zählen die
- *    ersten 6 Group-Matches in chronologischer Reihenfolge (Heuristik für
- *    die WM-Gruppe, in der das Tippspiel stattfindet — typischerweise 6
- *    Spiele à la "Gruppe E").
+ *    ersten 6 Group-Matches in chronologischer Reihenfolge. Basis ist
+ *    für beide Mitglieder gleich (hängt nur am Match, nicht am Spieler).
  *
- *  - **Volltreffer-Bonus (zusätzlich):** Pro Vorrundenspiel, in dem ein
- *    Team-Mitglied ≥3 Punkte erzielt hat, fällt eine WEITERE Kachel.
- *    Der Bonus zählt für alle Vorrundenspiele (auch über die ersten 6
- *    hinaus), nicht aber für K.o.-Runden.
+ *  - **Volltreffer-Bonus (zusätzlich):** Pro Vorrundenspiel, in dem DER
+ *    SPIELER SELBST ≥3 Punkte erzielt hat, fällt eine WEITERE Kachel.
+ *    Tipps des Partners zählen NICHT — jeder belohnt sich selbst.
  *
  *  - **Cap bei 9** — mehr als das Grid hergibt geht nicht. Beispiele:
- *      • 6 gespielte Vorrundenspiele, 0 Volltreffer → 6 Kacheln
- *      • 6 gespielte Vorrundenspiele, 3 Volltreffer → 9 Kacheln (cap)
- *      • 3 gespielte Vorrundenspiele, 1 Volltreffer → 4 Kacheln
+ *      • Alex hat 1 Volltreffer im 1. Gruppenspiel, Dirk nicht:
+ *        Alex sieht 2 Kacheln (Basis + Bonus), Dirk sieht 1 (nur Basis).
+ *      • Vorrunde komplett, 0 eigene Volltreffer → 6 Kacheln.
+ *      • Vorrunde komplett, 3 eigene Volltreffer → 9 Kacheln (cap).
  *
  *  - **Im Finale wird NICHT automatisch enthüllt** — alle Kacheln fallen
  *    nur, wenn der Spieler den Partner richtig erraten hat (oder die 9
@@ -41,20 +41,17 @@ export interface TipLite {
   points_earned: number;
 }
 
-export interface TeamLite {
-  member_profile_ids: string[]; // beide Mitglieder (m und f)
-}
-
 /**
- * Liefert die Anzahl der bisher freigeschalteten Kacheln (0..9).
+ * Liefert die Anzahl der bisher freigeschalteten Kacheln (0..9) für
+ * einen einzelnen Spieler.
  *
- * @param team       Team mit Mitglieder-Profil-IDs
- * @param matches    alle Matches des Turniers (Reihenfolge egal — wird sortiert)
- * @param tips       alle Tipps der beiden Team-Mitglieder
- * @param _now       (ungenutzt — historisch fuer KO-Bonus, jetzt obsolet)
+ * @param playerProfileId  ID des Spielers, dessen Volltreffer zaehlen
+ * @param matches          alle Matches des Turniers
+ * @param tips             Tipps (eigene + ggf. weitere — andere werden ignoriert)
+ * @param _now             ungenutzt (historisch für KO-Bonus, jetzt obsolet)
  */
 export function tilesUnlocked(
-  team: TeamLite,
+  playerProfileId: string,
   matches: MatchLite[],
   tips: TipLite[],
   _now: Date = new Date(),
@@ -73,13 +70,13 @@ export function tilesUnlocked(
     if (m.result_1 != null && m.result_2 != null) basis += 1;
   }
 
-  // Bonus: pro Vorrundenspiel mit >=3 Punkten eines Team-Mitglieds.
-  // Bonus zaehlt fuer alle Vorrundenspiele (auch jenseits der ersten 6),
-  // aber nicht fuer K.o.-Runden.
+  // Bonus: pro Vorrundenspiel mit >=3 Punkten DES Spielers (nicht des
+  // Partners!). Bonus zaehlt fuer alle Vorrundenspiele (auch jenseits der
+  // ersten 6), aber nicht fuer K.o.-Runden.
   const groupIds = new Set(groupMatches.map((m) => m.id));
   const bonusMatches = new Set<string>();
   for (const t of tips) {
-    if (!team.member_profile_ids.includes(t.profile_id)) continue;
+    if (t.profile_id !== playerProfileId) continue;
     if (!groupIds.has(t.match_id)) continue;
     if (t.points_earned >= 3) bonusMatches.add(t.match_id);
   }

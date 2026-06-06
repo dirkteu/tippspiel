@@ -4,10 +4,9 @@ import {
   openTilePositions,
   type MatchLite,
   type TipLite,
-  type TeamLite,
 } from "@/lib/tiles";
 
-const team: TeamLite = { member_profile_ids: ["m1", "f1"] };
+// "m1" = Dirk, "f1" = Alex (Team-Mitglieder). Berechnung erfolgt pro Spieler.
 
 function makeGroupMatch(
   id: string,
@@ -31,9 +30,9 @@ const sixGroupMatchesPlayed: MatchLite[] = [1, 2, 3, 4, 5, 6].map((d) =>
   makeGroupMatch(`g${d}`, 10 + d, { result_1: 1, result_2: 0 }),
 );
 
-describe("tilesUnlocked", () => {
+describe("tilesUnlocked (pro Spieler)", () => {
   it("0 Kacheln zu Beginn (keine Spiele gewertet, keine Tipps)", () => {
-    expect(tilesUnlocked(team, sixGroupMatchesUnplayed, [])).toBe(0);
+    expect(tilesUnlocked("m1", sixGroupMatchesUnplayed, [])).toBe(0);
   });
 
   it("1 Kachel nach erstem gewerteten Vorrundenspiel (Basis allein)", () => {
@@ -41,10 +40,10 @@ describe("tilesUnlocked", () => {
       makeGroupMatch("g1", 11, { result_1: 2, result_2: 1 }),
       ...sixGroupMatchesUnplayed.slice(1),
     ];
-    expect(tilesUnlocked(team, matches, [])).toBe(1);
+    expect(tilesUnlocked("m1", matches, [])).toBe(1);
   });
 
-  it("2 Kacheln: gewertetes Spiel + Volltreffer eines Mitglieds (kumulativ)", () => {
+  it("2 Kacheln: gewertetes Spiel + eigener Volltreffer (kumulativ)", () => {
     const matches: MatchLite[] = [
       makeGroupMatch("g1", 11, { result_1: 2, result_2: 1 }),
       ...sixGroupMatchesUnplayed.slice(1),
@@ -52,72 +51,70 @@ describe("tilesUnlocked", () => {
     const tips: TipLite[] = [
       { match_id: "g1", profile_id: "m1", points_earned: 3 },
     ];
-    expect(tilesUnlocked(team, matches, tips)).toBe(2);
+    expect(tilesUnlocked("m1", matches, tips)).toBe(2);
   });
 
-  it("Partner-Volltreffer (f1) zaehlt ebenfalls als Bonus", () => {
+  it("Volltreffer des Partners zaehlt NICHT fuer mich", () => {
+    // Alex (f1) hat Volltreffer, Dirk (m1) nicht. Dirk sieht nur die Basis.
     const matches: MatchLite[] = [
-      ...sixGroupMatchesUnplayed.slice(0, 2),
-      makeGroupMatch("g3", 13, { result_1: 0, result_2: 0 }),
-      ...sixGroupMatchesUnplayed.slice(3),
+      makeGroupMatch("g1", 11, { result_1: 2, result_2: 1 }),
+      ...sixGroupMatchesUnplayed.slice(1),
     ];
     const tips: TipLite[] = [
-      { match_id: "g3", profile_id: "f1", points_earned: 4 },
+      { match_id: "g1", profile_id: "f1", points_earned: 4 },
+      { match_id: "g1", profile_id: "m1", points_earned: 1 },
     ];
-    // g3 ist gewertet → 1 Basis + 1 Bonus = 2
-    expect(tilesUnlocked(team, matches, tips)).toBe(2);
+    expect(tilesUnlocked("m1", matches, tips)).toBe(1); // Dirk: nur Basis
+    expect(tilesUnlocked("f1", matches, tips)).toBe(2); // Alex: Basis + Bonus
   });
 
-  it("Volltreffer in ungewertetem Spiel: Bonus zaehlt trotzdem", () => {
-    // Hypothetisch — in der Praxis koennte das nicht vorkommen, weil
-    // points_earned erst beim Wertungs-Sync gesetzt wird. Aber Logik
-    // sollte unabhaengig vom Match-Status korrekt funktionieren.
+  it("Volltreffer in ungewertetem Spiel: Bonus zaehlt trotzdem (Edge-Case)", () => {
     const tips: TipLite[] = [
       { match_id: "g1", profile_id: "m1", points_earned: 5 },
     ];
-    expect(tilesUnlocked(team, sixGroupMatchesUnplayed, tips)).toBe(1);
+    expect(tilesUnlocked("m1", sixGroupMatchesUnplayed, tips)).toBe(1);
   });
 
   it("kein Bonus bei <3 Punkten", () => {
     const tips: TipLite[] = [
       { match_id: "g1", profile_id: "m1", points_earned: 2 },
-      { match_id: "g2", profile_id: "f1", points_earned: 0 },
+      { match_id: "g2", profile_id: "m1", points_earned: 0 },
     ];
-    expect(tilesUnlocked(team, sixGroupMatchesUnplayed, tips)).toBe(0);
+    expect(tilesUnlocked("m1", sixGroupMatchesUnplayed, tips)).toBe(0);
   });
 
   it("6 Basis-Kacheln, wenn alle 6 Vorrundenspiele gewertet ohne Volltreffer", () => {
-    expect(tilesUnlocked(team, sixGroupMatchesPlayed, [])).toBe(6);
+    expect(tilesUnlocked("m1", sixGroupMatchesPlayed, [])).toBe(6);
   });
 
-  it("Cap bei 9: 6 gewertete Spiele + 3 Volltreffer = 9", () => {
+  it("Cap bei 9: 6 gewertete Spiele + 3 eigene Volltreffer = 9", () => {
     const tips: TipLite[] = [
       { match_id: "g1", profile_id: "m1", points_earned: 4 },
-      { match_id: "g2", profile_id: "f1", points_earned: 3 },
+      { match_id: "g2", profile_id: "m1", points_earned: 3 },
       { match_id: "g3", profile_id: "m1", points_earned: 5 },
     ];
-    expect(tilesUnlocked(team, sixGroupMatchesPlayed, tips)).toBe(9);
+    expect(tilesUnlocked("m1", sixGroupMatchesPlayed, tips)).toBe(9);
   });
 
-  it("Cap bei 9: 6 gewertete + 6 Volltreffer = 9 (gedeckelt)", () => {
+  it("Cap bei 9: 6 gewertete + 6 eigene Volltreffer = 9 (gedeckelt)", () => {
     const tips: TipLite[] = sixGroupMatchesPlayed.map((m) => ({
       match_id: m.id,
       profile_id: "m1",
       points_earned: 4,
     }));
-    expect(tilesUnlocked(team, sixGroupMatchesPlayed, tips)).toBe(9);
+    expect(tilesUnlocked("m1", sixGroupMatchesPlayed, tips)).toBe(9);
   });
 
-  it("doppelter Volltreffer (m + f) im selben Match = nur 1 Bonus", () => {
+  it("Mehrere eigene Volltreffer im selben Match (theoretisch) zaehlen nur einmal", () => {
     const tips: TipLite[] = [
       { match_id: "g1", profile_id: "m1", points_earned: 4 },
-      { match_id: "g1", profile_id: "f1", points_earned: 3 },
+      { match_id: "g1", profile_id: "m1", points_earned: 5 },
     ];
-    // g1 ungespielt → Basis 0 + Bonus 1 = 1
-    expect(tilesUnlocked(team, sixGroupMatchesUnplayed, tips)).toBe(1);
+    // g1 ungespielt → Basis 0 + Bonus 1 (Set-Dedupe) = 1
+    expect(tilesUnlocked("m1", sixGroupMatchesUnplayed, tips)).toBe(1);
   });
 
-  it("Volltreffer ausserhalb der ersten 6 Vorrundenspiele zaehlt trotzdem als Bonus", () => {
+  it("Eigener Volltreffer ausserhalb der ersten 6 Vorrundenspiele zaehlt trotzdem", () => {
     const matches: MatchLite[] = [
       ...sixGroupMatchesUnplayed,
       makeGroupMatch("g7", 20, { result_1: 1, result_2: 2 }),
@@ -125,9 +122,7 @@ describe("tilesUnlocked", () => {
     const tips: TipLite[] = [
       { match_id: "g7", profile_id: "m1", points_earned: 4 },
     ];
-    // Basis: 0 (g7 ist 7. chronologisch, ausserhalb der ersten 6)
-    // Bonus: 1 (Vorrundenspiel mit Volltreffer)
-    expect(tilesUnlocked(team, matches, tips)).toBe(1);
+    expect(tilesUnlocked("m1", matches, tips)).toBe(1);
   });
 
   it("KO-Spiele zaehlen NICHT — weder als Basis noch als Bonus", () => {
@@ -147,33 +142,26 @@ describe("tilesUnlocked", () => {
         result_1: 3,
         result_2: 0,
       },
-      {
-        id: "sf-1",
-        round: "sf",
-        match_date: "2026-07-08T18:00:00Z",
-        result_1: null,
-        result_2: null,
-      },
     ];
     const tips: TipLite[] = [
       { match_id: "r16-1", profile_id: "m1", points_earned: 4 },
-      { match_id: "qf-1", profile_id: "f1", points_earned: 3 },
+      { match_id: "qf-1", profile_id: "m1", points_earned: 3 },
     ];
-    expect(tilesUnlocked(team, matches, tips)).toBe(0);
+    expect(tilesUnlocked("m1", matches, tips)).toBe(0);
   });
 
-  it("ignoriert Tipps von fremden Profilen", () => {
+  it("ignoriert Tipps von Drittprofilen", () => {
     const tips: TipLite[] = [
       { match_id: "g1", profile_id: "fremder", points_earned: 4 },
     ];
-    expect(tilesUnlocked(team, sixGroupMatchesUnplayed, tips)).toBe(0);
+    expect(tilesUnlocked("m1", sixGroupMatchesUnplayed, tips)).toBe(0);
   });
 
   it("ignoriert Tipps auf nicht-existente Match-IDs", () => {
     const tips: TipLite[] = [
       { match_id: "ghost", profile_id: "m1", points_earned: 4 },
     ];
-    expect(tilesUnlocked(team, sixGroupMatchesUnplayed, tips)).toBe(0);
+    expect(tilesUnlocked("m1", sixGroupMatchesUnplayed, tips)).toBe(0);
   });
 });
 

@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     fetchTipsForTeam(memberIds),
   ]);
   const unlocked = tilesUnlocked(
-    { member_profile_ids: memberIds },
+    session.profile.id,
     matches.map((m) => ({
       id: m.id,
       round: m.round,

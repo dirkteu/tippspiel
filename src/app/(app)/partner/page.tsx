@@ -46,7 +46,7 @@ export default async function PartnerPage() {
     .map((c) => ({ id: c.id, real_name: c.real_name! }));
 
   const open = tilesUnlocked(
-    { member_profile_ids: memberIds },
+    session.profile.id,
     matches.map((m) => ({
       id: m.id,
       round: m.round,
