@@ -36,7 +36,9 @@ export async function GET() {
       });
     }
 
-    return streamAvatar(partner.avatar_url);
+    // no-store: kein Browser-Cache. Sonst sieht der User bei Team-Wechsel
+    // oder Avatar-Update bis zu 5 Min lang das alte Bild.
+    return streamAvatar(partner.avatar_url, "no-store");
   } catch {
     return new NextResponse(PLACEHOLDER_SVG, {
       headers: { "Content-Type": "image/svg+xml" },

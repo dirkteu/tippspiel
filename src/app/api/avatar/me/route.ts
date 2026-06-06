@@ -24,16 +24,16 @@ export async function GET() {
   }
 }
 
-export async function streamAvatar(path: string) {
+export async function streamAvatar(path: string, cacheControl: string = "private, max-age=300") {
   try {
     const sb = supabaseService();
     const { data, error } = await sb.storage.from("avatars").download(path);
     if (error || !data) return new NextResponse(PLACEHOLDER_SVG, { headers: { "Content-Type": "image/svg+xml" } });
     const buf = Buffer.from(await data.arrayBuffer());
     return new NextResponse(new Uint8Array(buf), {
-      headers: { "Content-Type": data.type || "image/jpeg", "Cache-Control": "private, max-age=300" },
+      headers: { "Content-Type": data.type || "image/jpeg", "Cache-Control": cacheControl },
     });
-  } catch (e) {
+  } catch {
     return new NextResponse(PLACEHOLDER_SVG, { headers: { "Content-Type": "image/svg+xml" } });
   }
 }

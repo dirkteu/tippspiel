@@ -89,7 +89,7 @@ export default async function PartnerPage() {
 
       {partner ? (
         <PartnerTile
-          photoSrc="/api/avatar/partner"
+          photoSrc={`/api/avatar/partner?v=${partner.id}`}
           tileOrder={session.team.tile_order}
           tilesOpen={tilesOpenForDisplay}
           revealedName={revealedName}
