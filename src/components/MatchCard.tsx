@@ -40,6 +40,10 @@ export function MatchCard({ match, tip, onChange, onEdit }: Props) {
   // Tipp gespeichert + nicht gesperrt = "grau", Steppers aus, Bearbeiten-Button.
   const lockedForEdit = t.saved && !match.locked;
   const disabled = match.locked || !onChange || lockedForEdit;
+  // Read-only-Modus (z.B. Spieltag-Uebersicht): +/- Buttons werden gar nicht
+  // erst gerendert, damit der User nicht denkt er koenne hier tippen.
+  const readOnly = !onChange;
+  const showScoreDashes = readOnly && !t.saved;
 
   const showDirty = !t.saved && !match.locked && (t.tip_1 > 0 || t.tip_2 > 0);
 
@@ -75,45 +79,49 @@ export function MatchCard({ match, tip, onChange, onEdit }: Props) {
           <span className="tn">{match.team_1}</span>
         </div>
         <div className="stepper">
-          <div className="pm">
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onChange?.({ tip_1: t.tip_1 + 1, tip_2: t.tip_2 })}
-              aria-label="plus Heim"
-            >
-              +
-            </button>
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onChange?.({ tip_1: Math.max(0, t.tip_1 - 1), tip_2: t.tip_2 })}
-              aria-label="minus Heim"
-            >
-              −
-            </button>
-          </div>
-          <span className="num">{t.tip_1}</span>
+          {!readOnly && (
+            <div className="pm">
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange?.({ tip_1: t.tip_1 + 1, tip_2: t.tip_2 })}
+                aria-label="plus Heim"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange?.({ tip_1: Math.max(0, t.tip_1 - 1), tip_2: t.tip_2 })}
+                aria-label="minus Heim"
+              >
+                −
+              </button>
+            </div>
+          )}
+          <span className="num">{showScoreDashes ? "–" : t.tip_1}</span>
           <span className="colon">:</span>
-          <span className="num">{t.tip_2}</span>
-          <div className="pm">
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onChange?.({ tip_1: t.tip_1, tip_2: t.tip_2 + 1 })}
-              aria-label="plus Auswärts"
-            >
-              +
-            </button>
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onChange?.({ tip_1: t.tip_1, tip_2: Math.max(0, t.tip_2 - 1) })}
-              aria-label="minus Auswärts"
-            >
-              −
-            </button>
-          </div>
+          <span className="num">{showScoreDashes ? "–" : t.tip_2}</span>
+          {!readOnly && (
+            <div className="pm">
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange?.({ tip_1: t.tip_1, tip_2: t.tip_2 + 1 })}
+                aria-label="plus Auswärts"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange?.({ tip_1: t.tip_1, tip_2: Math.max(0, t.tip_2 - 1) })}
+                aria-label="minus Auswärts"
+              >
+                −
+              </button>
+            </div>
+          )}
         </div>
         <div className="team">
           <span className="flag">{match.flag_2 ?? "🏳️"}</span>
