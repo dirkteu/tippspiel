@@ -16,7 +16,7 @@ export interface TippsInitial {
   championAlreadySet: boolean;
 }
 
-const SAVE_DEBOUNCE_MS = 5000;
+const SAVE_DEBOUNCE_MS = 3000;
 const TOAST_THROTTLE_MS = 4000;
 
 export function TippsClient({ initial }: { initial: TippsInitial }) {
