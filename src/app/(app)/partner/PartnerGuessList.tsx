@@ -104,15 +104,19 @@ export function PartnerGuessList({
                 </div>
               </>
             )}
-            {teamName && (
-              <p className="t-small" style={{ marginTop: 14, lineHeight: 1.5 }}>
-                {partnerPseudonym
-                  ? <>Du und <strong style={{ color: "var(--fg1)" }}>{partnerPseudonym}</strong> bildet das Team <strong style={{ color: "var(--fg1)" }}>{teamName}</strong>.</>
-                  : <>Ihr bildet zusammen das Team <strong style={{ color: "var(--fg1)" }}>{teamName}</strong>.</>}
-                <br />
-                Viel Erfolg!
-              </p>
-            )}
+            <p className="t-small" style={{ marginTop: 14, lineHeight: 1.5 }}>
+              {partnerPseudonym && teamName ? (
+                <>Du und <strong style={{ color: "var(--fg1)" }}>{partnerPseudonym}</strong> bildet das Team <strong style={{ color: "var(--fg1)" }}>{teamName}</strong>.</>
+              ) : teamName ? (
+                <>Ihr bildet zusammen das Team <strong style={{ color: "var(--fg1)" }}>{teamName}</strong>.</>
+              ) : partnerPseudonym ? (
+                <>Du und <strong style={{ color: "var(--fg1)" }}>{partnerPseudonym}</strong> bildet zusammen ein Team.</>
+              ) : (
+                <>Ihr bildet zusammen ein Team.</>
+              )}
+              <br />
+              Viel Erfolg!
+            </p>
           </div>
         ) : (
           <>
