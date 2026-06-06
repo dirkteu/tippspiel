@@ -46,7 +46,13 @@ export default async function PartnerPage() {
 
   const open = tilesUnlocked(
     { member_profile_ids: memberIds },
-    matches.map((m) => ({ id: m.id, round: m.round, match_date: m.match_date })),
+    matches.map((m) => ({
+      id: m.id,
+      round: m.round,
+      match_date: m.match_date,
+      result_1: m.result_1,
+      result_2: m.result_2,
+    })),
     tips.map((t) => ({
       match_id: t.match_id,
       profile_id: t.profile_id,
@@ -67,8 +73,9 @@ export default async function PartnerPage() {
       </span>
       <h1 className="h1" style={{ marginTop: 4 }}>Wer ist es?</h1>
       <p className="t-small" style={{ marginTop: 6, marginBottom: 18 }}>
-        Jeder Volltreffer (≥3 Punkte) deines Teams deckt eine Kachel auf.
-        K.o.-Runden bringen Bonus-Kacheln. Im Finale fällt der Vorhang.
+        Jedes gewertete Vorrundenspiel deckt eine Kachel auf. Volltreffer
+        (≥3 Punkte) deines Teams bringen je eine weitere. Errätst du es
+        richtig, fallen alle.
       </p>
 
       {partner ? (

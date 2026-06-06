@@ -1,15 +1,27 @@
 /**
  * Kachel-Freischalt-Logik (3×3 Secret Partner Grid).
  *
- * 9 Kacheln werden im Lauf des Turniers freigeschaltet:
- *  - Kachel 1..6: nach Gruppenspiel N, wenn mindestens ein Mitglied
- *                 des Teams ≥3 Punkte in genau diesem Spiel erzielt hat.
- *  - Kachel 7:    sobald das erste Achtelfinal-Spiel angesetzt ist.
- *  - Kachel 8:    sobald das erste Viertelfinal-Spiel angesetzt ist.
- *  - Kachel 9:    sobald das erste Halbfinal-Spiel angesetzt ist.
+ * 9 Kacheln werden im Lauf der WM-Vorrunde freigeschaltet:
  *
- * Im Finale ist die Maske im besten Fall komplett weg (worst case: Team
- * hat in der Gruppe alle 6 Spiele unter 3 Punkte – dann fehlen Kacheln 1..6).
+ *  - **Basis-Kachel (max. 6):** Pro gewertetem Vorrundenspiel (Admin hat
+ *    result_1 / result_2 eingetragen) fällt eine Kachel. Es zählen die
+ *    ersten 6 Group-Matches in chronologischer Reihenfolge (Heuristik für
+ *    die WM-Gruppe, in der das Tippspiel stattfindet — typischerweise 6
+ *    Spiele à la "Gruppe E").
+ *
+ *  - **Volltreffer-Bonus (zusätzlich):** Pro Vorrundenspiel, in dem ein
+ *    Team-Mitglied ≥3 Punkte erzielt hat, fällt eine WEITERE Kachel.
+ *    Der Bonus zählt für alle Vorrundenspiele (auch über die ersten 6
+ *    hinaus), nicht aber für K.o.-Runden.
+ *
+ *  - **Cap bei 9** — mehr als das Grid hergibt geht nicht. Beispiele:
+ *      • 6 gespielte Vorrundenspiele, 0 Volltreffer → 6 Kacheln
+ *      • 6 gespielte Vorrundenspiele, 3 Volltreffer → 9 Kacheln (cap)
+ *      • 3 gespielte Vorrundenspiele, 1 Volltreffer → 4 Kacheln
+ *
+ *  - **Im Finale wird NICHT automatisch enthüllt** — alle Kacheln fallen
+ *    nur, wenn der Spieler den Partner richtig erraten hat (oder die 9
+ *    auf natürlichem Weg erreicht werden).
  */
 
 export type Round = "group" | "r32" | "r16" | "qf" | "sf" | "3rd" | "final";
@@ -18,6 +30,9 @@ export interface MatchLite {
   id: string;
   round: Round;
   match_date: string; // ISO
+  /** Eingetragenes Ergebnis Heim / Auswaerts; null = noch nicht gewertet. */
+  result_1: number | null;
+  result_2: number | null;
 }
 
 export interface TipLite {
@@ -34,64 +49,42 @@ export interface TeamLite {
  * Liefert die Anzahl der bisher freigeschalteten Kacheln (0..9).
  *
  * @param team       Team mit Mitglieder-Profil-IDs
- * @param matches    alle Matches des Turniers (sortiert nach Datum aufsteigend)
+ * @param matches    alle Matches des Turniers (Reihenfolge egal — wird sortiert)
  * @param tips       alle Tipps der beiden Team-Mitglieder
- * @param now        aktueller Zeitpunkt (für Tests injizierbar)
+ * @param _now       (ungenutzt — historisch fuer KO-Bonus, jetzt obsolet)
  */
 export function tilesUnlocked(
   team: TeamLite,
   matches: MatchLite[],
   tips: TipLite[],
-  now: Date = new Date(),
+  _now: Date = new Date(),
 ): number {
-  // Tipps nach match_id für schnellen Lookup
-  const tipsByMatch = new Map<string, TipLite[]>();
-  for (const t of tips) {
-    if (!team.member_profile_ids.includes(t.profile_id)) continue;
-    const arr = tipsByMatch.get(t.match_id) ?? [];
-    arr.push(t);
-    tipsByMatch.set(t.match_id, arr);
-  }
-
-  let count = 0;
-
-  // 1..6: Gruppenspiele
+  // Vorrundenspiele chronologisch sortieren
   const groupMatches = matches
     .filter((m) => m.round === "group")
     .sort(
       (a, b) =>
         new Date(a.match_date).getTime() - new Date(b.match_date).getTime(),
-    )
-    .slice(0, 6);
+    );
 
-  for (const m of groupMatches) {
-    const teamTipsForMatch = tipsByMatch.get(m.id) ?? [];
-    if (teamTipsForMatch.some((t) => t.points_earned >= 3)) {
-      count += 1;
-    }
+  // Basis: bis zu 6 Slots, gefuellt pro gewertetem Match der ersten 6
+  let basis = 0;
+  for (const m of groupMatches.slice(0, 6)) {
+    if (m.result_1 != null && m.result_2 != null) basis += 1;
   }
 
-  // 7: erste Achtelfinal-Begegnung angesetzt
-  if (hasAnyScheduled(matches, "r16", now)) count += 1;
-  // 8: erste Viertelfinal-Begegnung angesetzt
-  if (hasAnyScheduled(matches, "qf", now)) count += 1;
-  // 9: erste Halbfinal-Begegnung angesetzt
-  if (hasAnyScheduled(matches, "sf", now)) count += 1;
+  // Bonus: pro Vorrundenspiel mit >=3 Punkten eines Team-Mitglieds.
+  // Bonus zaehlt fuer alle Vorrundenspiele (auch jenseits der ersten 6),
+  // aber nicht fuer K.o.-Runden.
+  const groupIds = new Set(groupMatches.map((m) => m.id));
+  const bonusMatches = new Set<string>();
+  for (const t of tips) {
+    if (!team.member_profile_ids.includes(t.profile_id)) continue;
+    if (!groupIds.has(t.match_id)) continue;
+    if (t.points_earned >= 3) bonusMatches.add(t.match_id);
+  }
 
-  return Math.min(count, 9);
-}
-
-function hasAnyScheduled(
-  matches: MatchLite[],
-  round: Round,
-  now: Date,
-): boolean {
-  return matches.some(
-    (m) =>
-      m.round === round &&
-      m.match_date && // gesetzt = ausgelost
-      new Date(m.match_date).getTime() <= now.getTime() + 7 * 24 * 60 * 60 * 1000, // innerhalb der nächsten Woche oder bereits vorbei
-  );
+  return Math.min(basis + bonusMatches.size, 9);
 }
 
 /**
