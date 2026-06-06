@@ -14,9 +14,19 @@ interface Props {
   /** Wenn bereits in der DB als aufgelöst markiert: Pseudonym sofort zeigen, kein Konfetti */
   alreadyRevealed?: string | null;
   partnerGender: "m" | "f";
+  /** Name des Teams (von beiden Mitgliedern gemeinsam vergeben). */
+  teamName: string | null;
+  /** Pseudonym des Partners — kann fehlen, wenn er sich noch nicht eingeloggt hat. */
+  partnerPseudonym: string | null;
 }
 
-export function PartnerGuessList({ candidates, alreadyRevealed = null, partnerGender }: Props) {
+export function PartnerGuessList({
+  candidates,
+  alreadyRevealed = null,
+  partnerGender,
+  teamName,
+  partnerPseudonym,
+}: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [tried, setTried] = useState<Set<string>>(new Set());
@@ -80,14 +90,27 @@ export function PartnerGuessList({ candidates, alreadyRevealed = null, partnerGe
             <div className="h1" style={{ marginTop: 8, fontSize: 20 }}>
               Treffer! 🎉
             </div>
-            <p className="t-small" style={{ marginTop: 6 }}>
-              {partnerGender === "f"
-                ? "Deine geheime Nachbarin spielt unter dem Pseudonym"
-                : "Dein geheimer Nachbar spielt unter dem Pseudonym"}
-            </p>
-            <div className="partner-name" style={{ marginTop: 8 }}>
-              {revealed.username || "(noch keins)"}
-            </div>
+            {partnerPseudonym && (
+              <>
+                <p className="t-small" style={{ marginTop: 10 }}>
+                  {partnerGender === "f"
+                    ? "Deine geheime Nachbarin spielt unter dem Pseudonym"
+                    : "Dein geheimer Nachbar spielt unter dem Pseudonym"}
+                </p>
+                <div className="partner-name" style={{ marginTop: 4 }}>
+                  {partnerPseudonym}
+                </div>
+              </>
+            )}
+            {teamName && (
+              <p className="t-small" style={{ marginTop: 14, lineHeight: 1.5 }}>
+                {partnerPseudonym
+                  ? <>Du und <strong style={{ color: "var(--fg1)" }}>{partnerPseudonym}</strong> bildet das Team <strong style={{ color: "var(--fg1)" }}>{teamName}</strong>.</>
+                  : <>Ihr bildet zusammen das Team <strong style={{ color: "var(--fg1)" }}>{teamName}</strong>.</>}
+                <br />
+                Viel Erfolg!
+              </p>
+            )}
           </div>
         ) : (
           <>

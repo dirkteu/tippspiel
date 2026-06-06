@@ -65,10 +65,14 @@ export default async function PartnerPage() {
   // Cap auf 0, damit nichts ins Negative laeuft.
   const effectiveOpen = Math.max(0, open - wrongGuesses);
 
-  // Sobald aufgelöst (= entweder alle Kacheln offen oder erfolgreiches
-  // Raten in der Vergangenheit) → Pseudonym freigeben.
+  // Sobald aufgelöst (erfolgreicher Treffer in der Vergangenheit) →
+  // Bild dauerhaft komplett enthuellen (alle 9 Kacheln offen),
+  // unabhaengig vom aktuellen Vorrunden-Stand. So bleibt das volle
+  // Foto auch nach Reload sichtbar, kein Zurueck zu Logo-Slices.
+  const tilesOpenForDisplay = alreadyRevealed ? 9 : effectiveOpen;
+
   const revealedName =
-    partner && (effectiveOpen >= 9 || alreadyRevealed) ? partner.username : null;
+    partner && (tilesOpenForDisplay >= 9 || alreadyRevealed) ? partner.username : null;
 
   return (
     <div className="scroll">
@@ -87,7 +91,7 @@ export default async function PartnerPage() {
         <PartnerTile
           photoSrc="/api/avatar/partner"
           tileOrder={session.team.tile_order}
-          tilesOpen={effectiveOpen}
+          tilesOpen={tilesOpenForDisplay}
           revealedName={revealedName}
         />
       ) : (
@@ -108,6 +112,8 @@ export default async function PartnerPage() {
           candidates={candidates}
           alreadyRevealed={alreadyRevealed ? (partner?.username ?? null) : null}
           partnerGender={partnerGender}
+          teamName={session.team.team_name}
+          partnerPseudonym={partner?.username ?? null}
         />
       )}
     </div>
