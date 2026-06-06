@@ -57,14 +57,17 @@ export default async function TippsPage() {
 
   // Sperrfrist Weltmeister-Tipp: 5 Min vor dem fruehesten KO-Spiel,
   // Fallback auf tournament_config falls noch keine KO-Spiele angelegt.
+  // Wenn beides fehlt -> Sperrzeit unbekannt, NICHT sperren (sonst koennte
+  // niemand vor Anlage der KO-Spiele tippen).
   const koDates = matches
     .filter((m) => m.round === "r32" || m.round === "r16")
     .map((m) => new Date(m.match_date).getTime());
   const firstKoMs = koDates.length > 0 ? Math.min(...koDates) : null;
-  const championLockAt = firstKoMs !== null
+  const championLockAt: string | null = firstKoMs !== null
     ? new Date(firstKoMs - 5 * 60_000).toISOString()
-    : configRes.data?.champion_lock_at ?? new Date(0).toISOString();
-  const championLocked = new Date(championLockAt).getTime() <= now.getTime();
+    : configRes.data?.champion_lock_at ?? null;
+  const championLocked = championLockAt !== null
+    && new Date(championLockAt).getTime() <= now.getTime();
   const championAlreadySet = champRes.data?.champion_team != null;
 
   return (

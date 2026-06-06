@@ -12,7 +12,7 @@ export interface TippsInitial {
   tips: Record<string, { tip_1: number; tip_2: number; points: number | null }>;
   championTip: string | null;
   championLocked: boolean;
-  championLockAt: string;
+  championLockAt: string | null;
   championAlreadySet: boolean;
 }
 
@@ -220,7 +220,9 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
               ? "Dein Weltmeister-Tipp ist final — kann nicht mehr geändert werden."
               : initial.championLocked
               ? "Sperrfrist überschritten — dein Tipp ist fix."
-              : `Du kannst deinen Tipp einmalig bis ${new Date(initial.championLockAt).toLocaleString("de-DE")} setzen.`}
+              : initial.championLockAt
+              ? `Du kannst deinen Tipp einmalig bis ${new Date(initial.championLockAt).toLocaleString("de-DE")} setzen.`
+              : "Du kannst deinen Tipp einmalig setzen — Sperrfrist beginnt mit den KO-Spielen."}
           </p>
           {savedChampion && champion && (
             <div className="tip-flag"><Award size={15} /> Weltmeister-Tipp gespeichert</div>
