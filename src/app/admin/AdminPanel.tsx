@@ -117,10 +117,11 @@ function fromDatetimeLocal(local: string): string {
 
 // ====================================================== AdminPanel =========
 
-type AdminTab = "A" | "B";
+type AdminTab = "A" | "B" | "C";
 const TAB_TITLES: Record<AdminTab, string> = {
   A: "Teams & Spieler",
   B: "Spiele & Einstellungen",
+  C: "Team-Übersicht",
 };
 
 export function AdminPanel({ roster, teams, matches, config }: Props) {
@@ -178,7 +179,7 @@ export function AdminPanel({ roster, teams, matches, config }: Props) {
             background: "var(--bg-elevated)",
           }}
         >
-          {(["A", "B"] as AdminTab[]).map((k) => (
+          {(["A", "B", "C"] as AdminTab[]).map((k) => (
             <button
               key={k}
               type="button"
@@ -226,6 +227,161 @@ export function AdminPanel({ roster, teams, matches, config }: Props) {
           <MatchesSection matches={matches} onChange={refresh} />
           <ConfigSection config={config} onChange={refresh} />
         </>
+      )}
+      {tab === "C" && <TeamOverviewSection teams={teams} roster={roster} />}
+    </div>
+  );
+}
+
+// ====================================================== Team-Übersicht =====
+
+function TeamOverviewSection({
+  teams,
+  roster,
+}: {
+  teams: Team[];
+  roster: RosterPlayer[];
+}) {
+  // Spieler nach team_id gruppieren
+  const byTeam = new Map<string, RosterPlayer[]>();
+  for (const p of roster) {
+    if (!p.team_id) continue;
+    if (!byTeam.has(p.team_id)) byTeam.set(p.team_id, []);
+    byTeam.get(p.team_id)!.push(p);
+  }
+
+  return (
+    <section>
+      <div className="section-head">
+        <span className="kicker">Team-Übersicht · {teams.length}</span>
+      </div>
+      {teams.length === 0 ? (
+        <p className="t-small" style={{ color: "var(--fg4)" }}>
+          Noch keine Teams ausgewürfelt.
+        </p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {teams.map((t, i) => {
+            const members = byTeam.get(t.id) ?? [];
+            const male = members.find((x) => x.gender === "m") ?? null;
+            const female = members.find((x) => x.gender === "f") ?? null;
+            return (
+              <TeamOverviewCard
+                key={t.id}
+                team={t}
+                idx={i + 1}
+                male={male}
+                female={female}
+              />
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TeamOverviewCard({
+  team,
+  idx,
+  male,
+  female,
+}: {
+  team: Team;
+  idx: number;
+  male: RosterPlayer | null;
+  female: RosterPlayer | null;
+}) {
+  return (
+    <div className="card pad" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+        <span className="kicker" style={{ minWidth: 28 }}>#{idx}</span>
+        <span style={{ fontWeight: 600, fontSize: 15 }}>
+          {team.team_name ?? (
+            <span style={{ color: "var(--fg4)", fontWeight: 400, fontStyle: "italic" }}>
+              — Noch ohne Namen —
+            </span>
+          )}
+        </span>
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", gap: 24, padding: "6px 0" }}>
+        <OverviewAvatar player={male} fallbackGender="m" isOwner={!!male && male.id === team.team_name_owner_id} />
+        <OverviewAvatar player={female} fallbackGender="f" isOwner={!!female && female.id === team.team_name_owner_id} />
+      </div>
+    </div>
+  );
+}
+
+function OverviewAvatar({
+  player,
+  fallbackGender,
+  isOwner,
+}: {
+  player: RosterPlayer | null;
+  fallbackGender: "m" | "f";
+  isOwner: boolean;
+}) {
+  const size = 96;
+  const genderGlyph = fallbackGender === "f" ? "♀" : "♂";
+  const hasPhoto = !!player?.avatar_url;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: size + 8 }}>
+      <div
+        style={{
+          position: "relative",
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          overflow: "hidden",
+          background: "var(--surface-2)",
+          border: "1px solid var(--border-soft)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--fg4)",
+          fontSize: 36,
+        }}
+      >
+        {hasPhoto && player ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/admin/roster/${player.id}/avatar/preview?v=0`}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : player ? (
+          <span>{genderGlyph}</span>
+        ) : (
+          <span style={{ fontSize: 28 }}>—</span>
+        )}
+        {isOwner && (
+          <span
+            title="Namensgeber"
+            style={{
+              position: "absolute",
+              top: 2,
+              right: 2,
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: "var(--accent, #ff8a00)",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              fontWeight: 700,
+              border: "2px solid var(--bg, #fff)",
+            }}
+          >
+            ×
+          </span>
+        )}
+      </div>
+      {isOwner && (
+        <span className="kicker" style={{ fontSize: 10 }}>
+          Namensgeber
+        </span>
       )}
     </div>
   );
