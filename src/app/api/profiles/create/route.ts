@@ -6,11 +6,13 @@ import { generateLoginToken, LOGIN_TOKEN_COOKIE } from "@/lib/auth";
 
 const Body = z.object({
   invite_code: z.string().min(4).max(64),
+  // username optional: bei Re-Login (joined_at gesetzt) wird er ignoriert.
   username: z
     .string()
     .min(2)
     .max(20)
-    .regex(/^[\p{L}\p{N} _.-]+$/u, "Nur Buchstaben, Zahlen, Leer-/Sonderzeichen"),
+    .regex(/^[\p{L}\p{N} _.-]+$/u, "Nur Buchstaben, Zahlen, Leer-/Sonderzeichen")
+    .optional(),
   team_name: z.string().min(2).max(40).optional(),
   // Foto kommt jetzt vom Admin, nicht mehr vom Spieler
 });
@@ -62,7 +64,13 @@ export async function POST(req: Request) {
     });
   }
 
-  // 3. Pseudonym auf Eindeutigkeit prüfen
+  // 3. Erst-Join: Pseudonym Pflicht + auf Eindeutigkeit prüfen
+  if (!username) {
+    return NextResponse.json(
+      { error: "Pseudonym erforderlich" },
+      { status: 400 },
+    );
+  }
   const { data: dupe } = await sb
     .from("profiles")
     .select("id")

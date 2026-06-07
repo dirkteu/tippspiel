@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { supabaseService } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { JoinForm } from "./JoinForm";
+import { AutoRelogin } from "./AutoRelogin";
 
 interface PageProps {
   params: Promise<{ code: string }>;
@@ -21,6 +22,18 @@ export default async function JoinPage({ params }: PageProps) {
     .maybeSingle();
 
   if (!profile) notFound();
+
+  // Bereits beigetreten? → Auto-Relogin in einem anderen Browser.
+  // Keine erneute Pseudonym-Abfrage, einfach Cookie setzen und weiter.
+  if (profile.joined_at) {
+    return (
+      <div className="shell">
+        <div className="screen">
+          <AutoRelogin code={code} username={profile.username} />
+        </div>
+      </div>
+    );
+  }
 
   let teamName: string | null = null;
   let alreadyTeamNamed = false;

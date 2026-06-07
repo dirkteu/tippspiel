@@ -195,7 +195,6 @@ function RankRow({
   return (
     <div className={`lb-row${row.is_me ? " me" : ""}`}>
       <span className={`lb-rank ${RANK_CLS[place - 1] ?? ""}`}>{place}</span>
-      <span className="lb-av">{row.gender === "f" ? "♀" : "♂"}</span>
       <div>
         <div className="lb-name">{row.username}</div>
         {icon && <div className="lb-sub" style={{ fontSize: 14 }}>{icon}</div>}
