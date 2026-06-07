@@ -72,6 +72,7 @@ interface Props {
   teams: Team[];
   matches: Match[];
   config: TournamentConfig | null;
+  pointsByPlayer: Record<string, number>;
 }
 
 // ---------------------------------------------------------- Konstanten -----
@@ -124,7 +125,7 @@ const TAB_TITLES: Record<AdminTab, string> = {
   C: "Team-Übersicht",
 };
 
-export function AdminPanel({ roster, teams, matches, config }: Props) {
+export function AdminPanel({ roster, teams, matches, config, pointsByPlayer }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<AdminTab>("A");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -228,7 +229,9 @@ export function AdminPanel({ roster, teams, matches, config }: Props) {
           <ConfigSection config={config} onChange={refresh} />
         </>
       )}
-      {tab === "C" && <TeamOverviewSection teams={teams} roster={roster} />}
+      {tab === "C" && (
+        <TeamOverviewSection teams={teams} roster={roster} pointsByPlayer={pointsByPlayer} />
+      )}
     </div>
   );
 }
@@ -238,9 +241,11 @@ export function AdminPanel({ roster, teams, matches, config }: Props) {
 function TeamOverviewSection({
   teams,
   roster,
+  pointsByPlayer,
 }: {
   teams: Team[];
   roster: RosterPlayer[];
+  pointsByPlayer: Record<string, number>;
 }) {
   // Spieler nach team_id gruppieren
   const byTeam = new Map<string, RosterPlayer[]>();
@@ -265,6 +270,8 @@ function TeamOverviewSection({
             const members = byTeam.get(t.id) ?? [];
             const male = members.find((x) => x.gender === "m") ?? null;
             const female = members.find((x) => x.gender === "f") ?? null;
+            const malePts = male ? pointsByPlayer[male.id] ?? 0 : 0;
+            const femalePts = female ? pointsByPlayer[female.id] ?? 0 : 0;
             return (
               <TeamOverviewCard
                 key={t.id}
@@ -272,6 +279,9 @@ function TeamOverviewSection({
                 idx={i + 1}
                 male={male}
                 female={female}
+                malePts={malePts}
+                femalePts={femalePts}
+                totalPts={malePts + femalePts}
               />
             );
           })}
@@ -286,27 +296,47 @@ function TeamOverviewCard({
   idx,
   male,
   female,
+  malePts,
+  femalePts,
+  totalPts,
 }: {
   team: Team;
   idx: number;
   male: RosterPlayer | null;
   female: RosterPlayer | null;
+  malePts: number;
+  femalePts: number;
+  totalPts: number;
 }) {
   return (
     <div className="card pad" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
         <span className="kicker" style={{ minWidth: 28 }}>#{idx}</span>
-        <span style={{ fontWeight: 600, fontSize: 15 }}>
+        <span style={{ fontWeight: 600, fontSize: 15, flex: 1, minWidth: 0 }}>
           {team.team_name ?? (
             <span style={{ color: "var(--fg4)", fontWeight: 400, fontStyle: "italic" }}>
               — Noch ohne Namen —
             </span>
           )}
         </span>
+        <span style={{ fontWeight: 700, fontSize: 15, color: "var(--accent, #ff8a00)", whiteSpace: "nowrap" }}>
+          {totalPts}
+          <small style={{ fontWeight: 500, marginLeft: 2 }}> Pkt</small>
+        </span>
       </div>
       <div style={{ display: "flex", justifyContent: "center", gap: 24, padding: "6px 0" }}>
-        <OverviewAvatar player={male} fallbackGender="m" isOwner={!!male && male.id === team.team_name_owner_id} />
-        <OverviewAvatar player={female} fallbackGender="f" isOwner={!!female && female.id === team.team_name_owner_id} />
+        <OverviewAvatar
+          player={male}
+          fallbackGender="m"
+          isOwner={!!male && male.id === team.team_name_owner_id}
+          points={male ? malePts : null}
+        />
+        <OverviewAvatar
+          player={female}
+          fallbackGender="f"
+          isOwner={!!female && female.id === team.team_name_owner_id}
+          points={female ? femalePts : null}
+        />
       </div>
     </div>
   );
@@ -316,10 +346,12 @@ function OverviewAvatar({
   player,
   fallbackGender,
   isOwner,
+  points,
 }: {
   player: RosterPlayer | null;
   fallbackGender: "m" | "f";
   isOwner: boolean;
+  points: number | null;
 }) {
   const size = 96;
   const genderGlyph = fallbackGender === "f" ? "♀" : "♂";
@@ -381,6 +413,12 @@ function OverviewAvatar({
       {isOwner && (
         <span className="kicker" style={{ fontSize: 10 }}>
           Namensgeber
+        </span>
+      )}
+      {points !== null && (
+        <span style={{ fontSize: 12, color: "var(--fg3, #888)", fontWeight: 600 }}>
+          {points}
+          <span style={{ fontWeight: 400 }}> Pkt</span>
         </span>
       )}
     </div>

@@ -39,7 +39,7 @@ export default async function AdminPage() {
     );
   }
   const sb = supabaseService();
-  const [teamsRes, matchesRes, configRes, rosterRes] = await Promise.all([
+  const [teamsRes, matchesRes, configRes, rosterRes, tipsRes, champTipsRes] = await Promise.all([
     sb.from("teams").select("id,team_name,team_name_owner_id").order("created_at", { ascending: false }),
     sb.from("matches").select("*").order("match_date", { ascending: true }),
     sb.from("tournament_config").select("*").eq("id", 1).maybeSingle(),
@@ -49,7 +49,19 @@ export default async function AdminPage() {
         "id,real_name,gender,real_partner_id,invite_code,team_id,joined_at,username,avatar_url",
       )
       .order("real_name", { ascending: true }),
+    sb.from("tips").select("profile_id,points_earned"),
+    sb.from("champion_tips").select("profile_id,points_earned"),
   ]);
+
+  // Punkte pro Spieler aggregieren (gleiche Quelle wie /tabelle)
+  const pointsByPlayer: Record<string, number> = {};
+  for (const t of tipsRes.data ?? []) {
+    pointsByPlayer[t.profile_id] = (pointsByPlayer[t.profile_id] ?? 0) + (t.points_earned ?? 0);
+  }
+  for (const c of champTipsRes.data ?? []) {
+    pointsByPlayer[c.profile_id] = (pointsByPlayer[c.profile_id] ?? 0) + (c.points_earned ?? 0);
+  }
+
   return (
     <div className="shell">
       <div className="screen">
@@ -58,6 +70,7 @@ export default async function AdminPage() {
           teams={teamsRes.data ?? []}
           matches={matchesRes.data ?? []}
           config={configRes.data ?? null}
+          pointsByPlayer={pointsByPlayer}
         />
       </div>
     </div>
