@@ -22,8 +22,6 @@ const RANK_CLS = ["gold", "silver", "bronze"];
 
 function rankIcon(place: number, isLast: boolean): string {
   if (place === 1) return "⭐⭐⭐";
-  if (place === 2) return "⭐⭐";
-  if (place === 3) return "⭐";
   if (isLast) return "💋";
   return "";
 }
@@ -94,9 +92,6 @@ export default async function TabellePage() {
     }))
     .sort((a, b) => b.total_points - a.total_points);
 
-  const menRanking = individualRanking.filter((r) => r.gender === "m");
-  const womenRanking = individualRanking.filter((r) => r.gender === "f");
-
   return (
     <div className="scroll">
       <AppBar />
@@ -130,23 +125,13 @@ export default async function TabellePage() {
         rows={individualRanking}
         currentId={session.profile.id}
       />
-      <IndividualBlock
-        title="Männer"
-        rows={menRanking}
-        currentId={session.profile.id}
-      />
-      <IndividualBlock
-        title="Frauen"
-        rows={womenRanking}
-        currentId={session.profile.id}
-      />
     </div>
   );
 }
 
 /**
- * Top-3 mit Sternen, Letzter mit Kuss-Smiley, eigene Position eingeblendet
- * falls außerhalb dieser sichtbaren Auswahl.
+ * Zeigt nur den Ersten, die eigene Position (falls weder Erster noch Letzter)
+ * und den Letzten. Trenner "…" wenn dazwischen eine Lücke besteht.
  */
 function IndividualBlock({
   title,
@@ -160,12 +145,9 @@ function IndividualBlock({
   if (rows.length === 0) {
     return null;
   }
-  const top = rows.slice(0, 3);
   const lastIdx = rows.length - 1;
-  const last = rows.length > 3 ? rows[lastIdx] : null;
   const myIdx = rows.findIndex((r) => r.id === currentId);
-  const myShown = top.some((r) => r.id === currentId) || (last && last.id === currentId);
-  const meExtra = !myShown && myIdx >= 0 ? { ...rows[myIdx], _place: myIdx + 1 } : null;
+  const showMe = myIdx > 0 && myIdx < lastIdx;
 
   return (
     <section>
@@ -173,39 +155,31 @@ function IndividualBlock({
         <span className="kicker">{title}</span>
       </div>
       <div className="lb">
-        {top.map((r, i) => (
-          <RankRow
-            key={r.id}
-            place={i + 1}
-            row={r}
-            icon={rankIcon(i + 1, false)}
-          />
-        ))}
-        {last && (
+        <RankRow place={1} row={rows[0]} icon={rankIcon(1, false)} />
+        {showMe && myIdx > 1 && <Ellipsis />}
+        {showMe && (
+          <RankRow place={myIdx + 1} row={rows[myIdx]} icon="" />
+        )}
+        {rows.length > 1 && (
           <>
-            {rows.length > 4 && (
-              <div
-                style={{ textAlign: "center", color: "var(--fg4)", fontSize: 13, padding: "4px 0" }}
-              >
-                …
-              </div>
-            )}
+            {((showMe && myIdx < lastIdx - 1) || (!showMe && lastIdx > 1)) && <Ellipsis />}
             <RankRow
               place={lastIdx + 1}
-              row={last}
+              row={rows[lastIdx]}
               icon={rankIcon(lastIdx + 1, true)}
             />
           </>
         )}
-        {meExtra && (
-          <RankRow
-            place={meExtra._place}
-            row={meExtra}
-            icon=""
-          />
-        )}
       </div>
     </section>
+  );
+}
+
+function Ellipsis() {
+  return (
+    <div style={{ textAlign: "center", color: "var(--fg4)", fontSize: 13, padding: "4px 0" }}>
+      …
+    </div>
   );
 }
 
