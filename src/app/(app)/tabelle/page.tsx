@@ -1,6 +1,8 @@
 import { AppBar } from "@/components/primitives/AppBar";
 import { getSession } from "@/lib/auth";
 import { supabaseService } from "@/lib/supabase/server";
+import { fetchAllMatches, fetchTeamMemberIds, fetchTipsForTeam } from "@/lib/matches";
+import { tilesUnlocked } from "@/lib/tiles";
 
 interface TeamRanking {
   id: string;
@@ -30,13 +32,42 @@ export default async function TabellePage() {
   const session = (await getSession())!;
   const sb = supabaseService();
 
-  // Teams + Profile + alle Tipps
-  const [{ data: teams }, { data: profiles }, { data: tips }, { data: champTips }] = await Promise.all([
+  // Teams + Profile + alle Tipps  + tilesUnlocked-Daten fuer Anti-Leak-Gate
+  const memberIds = await fetchTeamMemberIds(session.team.id);
+  const [
+    { data: teams },
+    { data: profiles },
+    { data: tips },
+    { data: champTips },
+    allMatches,
+    teamTips,
+  ] = await Promise.all([
     sb.from("teams").select("id,team_name"),
     sb.from("profiles").select("id,team_id,username,gender,joined_at"),
     sb.from("tips").select("profile_id,points_earned"),
     sb.from("champion_tips").select("profile_id,points_earned"),
+    fetchAllMatches(),
+    fetchTipsForTeam(memberIds),
   ]);
+
+  // Wie viele Nachbar-Kacheln hat der aktuelle Spieler aufgedeckt?
+  // Bis 9/9 darf nicht erkennbar sein, welches Team einem gehoert.
+  const tilesOpen = tilesUnlocked(
+    session.profile.id,
+    allMatches.map((m) => ({
+      id: m.id,
+      round: m.round,
+      match_date: m.match_date,
+      result_1: m.result_1,
+      result_2: m.result_2,
+    })),
+    teamTips.map((t) => ({
+      match_id: t.match_id,
+      profile_id: t.profile_id,
+      points_earned: t.points_earned,
+    })),
+  );
+  const revealAllowed = tilesOpen >= 9;
 
   const profileToTeam = new Map<string, string | null>();
   for (const p of profiles ?? []) profileToTeam.set(p.id, p.team_id);
@@ -67,7 +98,9 @@ export default async function TabellePage() {
         team_name: t.team_name ?? "(unbenannt)",
         total_points: stats.total,
         volltreffer: stats.vt,
-        is_me: t.id === session.team.id,
+        // Eigene Team-Zeile erst markieren, wenn alle 9 Kacheln offen sind.
+        // Sonst koennte man aus dem Highlight auf das eigene Team schliessen.
+        is_me: revealAllowed && t.id === session.team.id,
       };
     })
     .sort((a, b) => b.total_points - a.total_points);

@@ -101,7 +101,9 @@ export default async function ProfilPage() {
           <div className="l">Volltreffer</div>
         </div>
         <div className="stat">
-          <div className="v">{rank ? `#${rank}` : "—"}</div>
+          <div className="v" title={tilesOpen < 9 ? "Wird sichtbar, wenn alle Kacheln aufgedeckt sind" : undefined}>
+            {tilesOpen >= 9 ? (rank ? `#${rank}` : "—") : "🔒"}
+          </div>
           <div className="l">Team-Rang</div>
         </div>
         <div className="stat">
