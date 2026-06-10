@@ -118,11 +118,12 @@ function fromDatetimeLocal(local: string): string {
 
 // ====================================================== AdminPanel =========
 
-type AdminTab = "A" | "B" | "C";
+type AdminTab = "A" | "B" | "C" | "D";
 const TAB_TITLES: Record<AdminTab, string> = {
   A: "Teams & Spieler",
   B: "Spiele & Einstellungen",
   C: "Team-Übersicht",
+  D: "Anmeldungen",
 };
 
 export function AdminPanel({ roster, teams, matches, config, pointsByPlayer }: Props) {
@@ -180,7 +181,7 @@ export function AdminPanel({ roster, teams, matches, config, pointsByPlayer }: P
             background: "var(--bg-elevated)",
           }}
         >
-          {(["A", "B", "C"] as AdminTab[]).map((k) => (
+          {(["A", "B", "C", "D"] as AdminTab[]).map((k) => (
             <button
               key={k}
               type="button"
@@ -231,6 +232,263 @@ export function AdminPanel({ roster, teams, matches, config, pointsByPlayer }: P
       )}
       {tab === "C" && (
         <TeamOverviewSection teams={teams} roster={roster} pointsByPlayer={pointsByPlayer} />
+      )}
+      {tab === "D" && <SignupOverviewSection teams={teams} roster={roster} />}
+    </div>
+  );
+}
+
+// ====================================================== Anmeldungen =======
+
+function SignupOverviewSection({
+  teams,
+  roster,
+}: {
+  teams: Team[];
+  roster: RosterPlayer[];
+}) {
+  const total = roster.length;
+  const joined = roster.filter((p) => !!p.joined_at).length;
+  const pending = total - joined;
+  const quote = total > 0 ? Math.round((joined / total) * 100) : 0;
+
+  const malesTotal = roster.filter((p) => p.gender === "m").length;
+  const femalesTotal = roster.filter((p) => p.gender === "f").length;
+  const malesJoined = roster.filter((p) => p.gender === "m" && p.joined_at).length;
+  const femalesJoined = roster.filter((p) => p.gender === "f" && p.joined_at).length;
+
+  // Pro Team Status
+  const teamStatus = teams.map((t) => {
+    const members = roster.filter((p) => p.team_id === t.id);
+    const m = members.find((x) => x.gender === "m") ?? null;
+    const f = members.find((x) => x.gender === "f") ?? null;
+    const mJoined = !!m?.joined_at;
+    const fJoined = !!f?.joined_at;
+    const joinedCount = (mJoined ? 1 : 0) + (fJoined ? 1 : 0);
+    const present = (m ? 1 : 0) + (f ? 1 : 0);
+    return {
+      id: t.id,
+      name: t.team_name,
+      joinedCount,
+      present,
+      missingM: !!m && !mJoined,
+      missingF: !!f && !fJoined,
+    };
+  });
+  // Sortierung: leer/halb zuerst (kritisch oben), dann komplett
+  teamStatus.sort((a, b) => a.joinedCount - b.joinedCount);
+
+  // Liste der Offenen
+  const pendingPlayers = roster
+    .filter((p) => !p.joined_at)
+    .sort((a, b) =>
+      (a.real_name ?? "").localeCompare(b.real_name ?? "", "de", { sensitivity: "base" }),
+    );
+
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      {/* KPI-Kacheln */}
+      <div className="section-head">
+        <span className="kicker">Anmelde-Status</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        <KpiTile label="Gesamt" value={String(total)} />
+        <KpiTile label="Angemeldet" value={`${joined}`} sub={`${quote}%`} accent="ok" />
+        <KpiTile label="Offen" value={`${pending}`} accent={pending > 0 ? "warn" : "ok"} />
+      </div>
+      {/* Fortschrittsbalken */}
+      <div
+        style={{
+          height: 8,
+          background: "var(--surface-2)",
+          borderRadius: 999,
+          overflow: "hidden",
+          border: "1px solid var(--border-soft)",
+        }}
+      >
+        <div
+          style={{
+            width: `${quote}%`,
+            height: "100%",
+            background: "var(--accent, #ff8a00)",
+            transition: "width .3s",
+          }}
+        />
+      </div>
+      {/* Geschlechter-Split */}
+      <p className="t-small" style={{ color: "var(--fg3)", marginTop: -6 }}>
+        Männer: <strong>{malesJoined}</strong> / {malesTotal} &nbsp;·&nbsp;
+        Frauen: <strong>{femalesJoined}</strong> / {femalesTotal}
+      </p>
+
+      {/* Team-Status */}
+      <div className="section-head" style={{ marginTop: 6 }}>
+        <span className="kicker">Teams · Status</span>
+      </div>
+      {teamStatus.length === 0 ? (
+        <p className="t-small" style={{ color: "var(--fg4)" }}>Noch keine Teams.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {teamStatus.map((t, i) => {
+            const color =
+              t.joinedCount === 2
+                ? "var(--win, #16a34a)"
+                : t.joinedCount === 1
+                ? "var(--accent, #ff8a00)"
+                : "var(--loss, #dc2626)";
+            const dot = t.joinedCount === 2 ? "🟢" : t.joinedCount === 1 ? "🟡" : "🔴";
+            const missing =
+              t.joinedCount < 2
+                ? `fehlt: ${[t.missingM ? "♂" : null, t.missingF ? "♀" : null]
+                    .filter(Boolean)
+                    .join(" + ")}`
+                : "komplett";
+            return (
+              <div
+                key={t.id}
+                className="card pad"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "10px 12px",
+                  borderLeft: `3px solid ${color}`,
+                }}
+              >
+                <span style={{ fontSize: 16 }}>{dot}</span>
+                <span className="kicker" style={{ minWidth: 28 }}>#{i + 1}</span>
+                <span style={{ fontWeight: 600, fontSize: 14, flex: 1, minWidth: 0 }}>
+                  {t.name ?? <span style={{ color: "var(--fg4)", fontStyle: "italic" }}>— ohne Namen —</span>}
+                </span>
+                <span className="t-small" style={{ color: "var(--fg3)" }}>
+                  {t.joinedCount}/{t.present} · {missing}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Offene Spieler */}
+      <div className="section-head" style={{ marginTop: 6 }}>
+        <span className="kicker">Offen · {pendingPlayers.length} Spieler</span>
+      </div>
+      {pendingPlayers.length === 0 ? (
+        <div
+          className="card pad"
+          style={{
+            textAlign: "center",
+            padding: "20px 14px",
+            color: "var(--win, #16a34a)",
+            fontWeight: 600,
+          }}
+        >
+          ✅ Alle Spieler sind beigetreten
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {pendingPlayers.map((p) => {
+            const team = teams.find((t) => t.id === p.team_id);
+            const teamLabel = team
+              ? team.team_name ?? "— Team ohne Namen —"
+              : "— noch ohne Team —";
+            return (
+              <div
+                key={p.id}
+                className="card pad"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "10px 12px",
+                }}
+              >
+                <PendingAvatar player={p} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>
+                    {p.real_name ?? "(unbenannt)"}{" "}
+                    <span style={{ color: "var(--fg4)", fontWeight: 400 }}>
+                      {p.gender === "f" ? "♀" : "♂"}
+                    </span>
+                  </div>
+                  <div className="t-small" style={{ color: "var(--fg4)", fontSize: 12 }}>
+                    {teamLabel}
+                  </div>
+                  <InviteLink code={p.invite_code} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function KpiTile({
+  label,
+  value,
+  sub,
+  accent,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: "ok" | "warn";
+}) {
+  const color =
+    accent === "ok" ? "var(--win, #16a34a)" : accent === "warn" ? "var(--accent, #ff8a00)" : undefined;
+  return (
+    <div
+      className="card pad"
+      style={{
+        padding: "10px 12px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        alignItems: "flex-start",
+      }}
+    >
+      <span className="kicker" style={{ fontSize: 11 }}>{label}</span>
+      <span style={{ fontWeight: 700, fontSize: 22, color, lineHeight: 1 }}>{value}</span>
+      {sub && (
+        <span className="t-small" style={{ color: "var(--fg4)", fontSize: 12 }}>
+          {sub}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function PendingAvatar({ player }: { player: RosterPlayer }) {
+  const size = 40;
+  const hasPhoto = !!player.avatar_url;
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        overflow: "hidden",
+        background: "var(--surface-2)",
+        border: "1px solid var(--border-soft)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "var(--fg4)",
+        fontSize: 18,
+        flexShrink: 0,
+      }}
+    >
+      {hasPhoto ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/admin/roster/${player.id}/avatar/preview?v=0`}
+          alt=""
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      ) : (
+        <span>{player.gender === "f" ? "♀" : "♂"}</span>
       )}
     </div>
   );
