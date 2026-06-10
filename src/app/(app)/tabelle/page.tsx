@@ -9,6 +9,8 @@ interface TeamRanking {
   team_name: string;
   total_points: number;
   volltreffer: number;
+  /** Positionswechsel seit dem letzten beendeten Spiel. >0 = aufgestiegen, <0 = abgestiegen, 0 = gleich, null = noch keine Vergleichsdaten */
+  tendency: number | null;
   is_me: boolean;
 }
 
@@ -28,6 +30,23 @@ function rankIcon(place: number, isLast: boolean): string {
   return "";
 }
 
+/** Tendenz-Pille: ▲ aufgestiegen / ▼ abgestiegen / ▬ keine Bewegung. */
+function Tendency({ value }: { value: number }) {
+  const color =
+    value > 0 ? "var(--win, #16a34a)" : value < 0 ? "var(--loss, #dc2626)" : "var(--fg4)";
+  const icon = value > 0 ? "▲" : value < 0 ? "▼" : "▬";
+  const label = value === 0 ? "" : Math.abs(value).toString();
+  return (
+    <span
+      title="Veränderung seit letztem beendeten Spiel"
+      style={{ marginLeft: 8, color, fontWeight: 600, fontSize: 12 }}
+    >
+      {icon}
+      {label && <span style={{ marginLeft: 2 }}>{label}</span>}
+    </span>
+  );
+}
+
 export default async function TabellePage() {
   const session = (await getSession())!;
   const sb = supabaseService();
@@ -44,7 +63,7 @@ export default async function TabellePage() {
   ] = await Promise.all([
     sb.from("teams").select("id,team_name"),
     sb.from("profiles").select("id,team_id,username,gender,joined_at"),
-    sb.from("tips").select("profile_id,points_earned"),
+    sb.from("tips").select("profile_id,match_id,points_earned"),
     sb.from("champion_tips").select("profile_id,points_earned"),
     fetchAllMatches(),
     fetchTipsForTeam(memberIds),
@@ -90,14 +109,71 @@ export default async function TabellePage() {
     pointsByTeam.set(teamId, cur);
   }
 
+  // Tendenz: Vergleich Ranking vor vs. nach dem letzten beendeten Spiel.
+  // Letztes beendetes Spiel = juengstes Match mit Ergebnis.
+  const completedMatches = allMatches.filter(
+    (m) => m.result_1 != null && m.result_2 != null,
+  );
+  const lastMatch = completedMatches.length > 0
+    ? completedMatches.reduce((a, b) =>
+        new Date(a.match_date).getTime() > new Date(b.match_date).getTime() ? a : b,
+      )
+    : null;
+
+  // Beitrag des letzten Spiels pro Team — den ziehen wir vom Aktuellen ab.
+  const lastMatchContribByTeam = new Map<string, number>();
+  if (lastMatch) {
+    for (const t of tips ?? []) {
+      if (t.match_id !== lastMatch.id) continue;
+      const teamId = profileToTeam.get(t.profile_id);
+      if (!teamId) continue;
+      lastMatchContribByTeam.set(
+        teamId,
+        (lastMatchContribByTeam.get(teamId) ?? 0) + t.points_earned,
+      );
+    }
+  }
+
+  // Hilfsfunktion: stabile Platzierung (gleiche Punkte → alphabetisch nach team.id)
+  function buildRankMap(pointsByTeamLocal: Map<string, number>): Map<string, number> {
+    const teamIds = (teams ?? []).map((t) => t.id);
+    const sorted = [...teamIds].sort((a, b) => {
+      const pa = pointsByTeamLocal.get(a) ?? 0;
+      const pb = pointsByTeamLocal.get(b) ?? 0;
+      if (pb !== pa) return pb - pa;
+      return a.localeCompare(b);
+    });
+    const ranks = new Map<string, number>();
+    sorted.forEach((id, i) => ranks.set(id, i + 1));
+    return ranks;
+  }
+
+  const currentPointsMap = new Map<string, number>();
+  for (const t of teams ?? []) {
+    currentPointsMap.set(t.id, pointsByTeam.get(t.id)?.total ?? 0);
+  }
+  const previousPointsMap = new Map<string, number>();
+  for (const t of teams ?? []) {
+    previousPointsMap.set(
+      t.id,
+      (pointsByTeam.get(t.id)?.total ?? 0) - (lastMatchContribByTeam.get(t.id) ?? 0),
+    );
+  }
+  const currentRankMap = buildRankMap(currentPointsMap);
+  const previousRankMap = lastMatch ? buildRankMap(previousPointsMap) : null;
+
   const teamRanking: TeamRanking[] = (teams ?? [])
     .map((t) => {
       const stats = pointsByTeam.get(t.id) ?? { total: 0, vt: 0 };
+      const tendency = previousRankMap
+        ? (previousRankMap.get(t.id) ?? 0) - (currentRankMap.get(t.id) ?? 0)
+        : null;
       return {
         id: t.id,
         team_name: t.team_name ?? "(unbenannt)",
         total_points: stats.total,
         volltreffer: stats.vt,
+        tendency,
         // Eigene Team-Zeile erst markieren, wenn alle 9 Kacheln offen sind.
         // Sonst koennte man aus dem Highlight auf das eigene Team schliessen.
         is_me: revealAllowed && t.id === session.team.id,
@@ -142,7 +218,12 @@ export default async function TabellePage() {
             <span className="lb-av">🏁</span>
             <div>
               <div className="lb-name">{r.team_name}</div>
-              <div className="lb-sub">{r.volltreffer} Volltreffer</div>
+              <div className="lb-sub">
+                {r.volltreffer} Volltreffer
+                {r.tendency !== null && (
+                  <Tendency value={r.tendency} />
+                )}
+              </div>
             </div>
             <span className="lb-pts">
               {r.total_points}
