@@ -614,6 +614,19 @@ function OverviewAvatar({
   const size = 96;
   const genderGlyph = fallbackGender === "f" ? "♀" : "♂";
   const hasPhoto = !!player?.avatar_url;
+  // Status-Border: gruen = beigetreten, rot = noch offen, neutral = Slot leer.
+  const status: "joined" | "pending" | "empty" = !player
+    ? "empty"
+    : player.joined_at
+    ? "joined"
+    : "pending";
+  const borderColor =
+    status === "joined"
+      ? "var(--win, #16a34a)"
+      : status === "pending"
+      ? "var(--loss, #dc2626)"
+      : "var(--border-soft)";
+  const borderWidth = status === "empty" ? 1 : 3;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: size + 8 }}>
       <div
@@ -624,7 +637,7 @@ function OverviewAvatar({
           borderRadius: "50%",
           overflow: "hidden",
           background: "var(--surface-2)",
-          border: "1px solid var(--border-soft)",
+          border: `${borderWidth}px solid ${borderColor}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
