@@ -9,9 +9,9 @@
  *    ersten 6 Group-Matches in chronologischer Reihenfolge. Basis ist
  *    für beide Mitglieder gleich (hängt nur am Match, nicht am Spieler).
  *
- *  - **Volltreffer-Bonus (zusätzlich):** Pro Vorrundenspiel, in dem DER
- *    SPIELER SELBST ≥3 Punkte erzielt hat, fällt eine WEITERE Kachel.
- *    Tipps des Partners zählen NICHT — jeder belohnt sich selbst.
+ *  - **Volltreffer-Bonus (zusätzlich):** Pro Spiel (Vorrunde UND K.o.-Runde),
+ *    in dem DER SPIELER SELBST ≥3 Punkte erzielt hat, fällt eine WEITERE
+ *    Kachel. Tipps des Partners zählen NICHT — jeder belohnt sich selbst.
  *
  *  - **Cap bei 9** — mehr als das Grid hergibt geht nicht. Beispiele:
  *      • Alex hat 1 Volltreffer im 1. Gruppenspiel, Dirk nicht:
@@ -70,14 +70,14 @@ export function tilesUnlocked(
     if (m.result_1 != null && m.result_2 != null) basis += 1;
   }
 
-  // Bonus: pro Vorrundenspiel mit >=3 Punkten DES Spielers (nicht des
-  // Partners!). Bonus zaehlt fuer alle Vorrundenspiele (auch jenseits der
-  // ersten 6), aber nicht fuer K.o.-Runden.
-  const groupIds = new Set(groupMatches.map((m) => m.id));
+  // Bonus: pro Spiel mit >=3 Punkten DES Spielers (nicht des Partners!).
+  // Zaehlt fuer ALLE Spiele des Turniers — Vorrunde (auch jenseits der
+  // ersten 6) und K.o.-Runden.
+  const matchIds = new Set(matches.map((m) => m.id));
   const bonusMatches = new Set<string>();
   for (const t of tips) {
     if (t.profile_id !== playerProfileId) continue;
-    if (!groupIds.has(t.match_id)) continue;
+    if (!matchIds.has(t.match_id)) continue;
     if (t.points_earned >= 3) bonusMatches.add(t.match_id);
   }
 

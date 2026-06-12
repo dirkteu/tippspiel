@@ -1,6 +1,6 @@
 /**
  * Punkte-Wertung nach klassischem 4-3-2-System.
- * Quelle der Wahrheit; identisch zur PostgreSQL-Funktion calc_points() in 0003_points_trigger.sql.
+ * Quelle der Wahrheit; identisch zur PostgreSQL-Funktion calc_points() in 0003_triggers.sql.
  */
 export function calcPoints(
   tip1: number,

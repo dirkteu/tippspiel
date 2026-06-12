@@ -69,7 +69,9 @@ export async function POST(req: Request) {
 }
 
 function friendly(msg: string): string {
-  if (msg.includes("Tipp gesperrt")) return "Sperrfrist überschritten";
+  if (msg.includes("Weltmeister-Tipp ist final"))
+    return "Weltmeister-Tipp ist final — nicht mehr änderbar";
   if (msg.includes("Weltmeister-Tipp gesperrt")) return "Weltmeister-Sperrfrist überschritten";
+  if (msg.includes("Tipp gesperrt")) return "Sperrfrist überschritten";
   return msg;
 }

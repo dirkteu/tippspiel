@@ -65,6 +65,39 @@ export default function RegelnPage() {
       />
 
       <div className="section-head" style={{ marginTop: 28 }}>
+        <span className="kicker">K.o.-Runde</span>
+      </div>
+      <div className="card pad" style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            flexShrink: 0,
+            borderRadius: 10,
+            background: "var(--surface-2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--accent)",
+          }}
+        >
+          <Target size={18} />
+        </div>
+        <div>
+          <div style={{ fontWeight: 600, color: "var(--fg1)", marginBottom: 4 }}>
+            Es zählt das Ergebnis nach 90 Minuten
+          </div>
+          <p className="t-small" style={{ margin: 0 }}>
+            Auch in den K.o.-Spielen tippst du das Ergebnis nach regulärer
+            Spielzeit — Verlängerung und Elfmeterschießen zählen NICHT für die
+            Wertung. Ein Unentschieden ist also auch im K.o.-Spiel ein gültiger
+            Tipp. Volltreffer (≥3 Pkt) in K.o.-Spielen decken zusätzlich eine
+            Bonus-Kachel auf.
+          </p>
+        </div>
+      </div>
+
+      <div className="section-head" style={{ marginTop: 28 }}>
         <span className="kicker">Sperrfrist</span>
       </div>
       <div className="card pad" style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
@@ -89,8 +122,8 @@ export default function RegelnPage() {
           </div>
           <p className="t-small" style={{ margin: 0 }}>
             Tipps werden 5 Minuten vor Anpfiff gesperrt — danach kannst du den Tipp
-            nicht mehr ändern. Den Weltmeister-Tipp kannst du bis zum offiziellen
-            Turnierstart anpassen.
+            nicht mehr ändern. Der Weltmeister-Tipp ist bis 5 Minuten vor dem
+            ersten K.o.-Spiel (28.06.) möglich — und einmal gesetzt sofort final.
           </p>
         </div>
       </div>

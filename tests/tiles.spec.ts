@@ -125,7 +125,7 @@ describe("tilesUnlocked (pro Spieler)", () => {
     expect(tilesUnlocked("m1", matches, tips)).toBe(1);
   });
 
-  it("KO-Spiele zaehlen NICHT — weder als Basis noch als Bonus", () => {
+  it("KO-Spiele zaehlen NICHT als Basis, aber Volltreffer dort als Bonus", () => {
     const matches: MatchLite[] = [
       ...sixGroupMatchesUnplayed,
       {
@@ -146,8 +146,36 @@ describe("tilesUnlocked (pro Spieler)", () => {
     const tips: TipLite[] = [
       { match_id: "r16-1", profile_id: "m1", points_earned: 4 },
       { match_id: "qf-1", profile_id: "m1", points_earned: 3 },
+      { match_id: "r16-1", profile_id: "f1", points_earned: 2 }, // kein Volltreffer
     ];
-    expect(tilesUnlocked("m1", matches, tips)).toBe(0);
+    // Basis 0 (KO-Ergebnisse zaehlen nicht als Basis) + 2 eigene KO-Volltreffer
+    expect(tilesUnlocked("m1", matches, tips)).toBe(2);
+    expect(tilesUnlocked("f1", matches, tips)).toBe(0);
+  });
+
+  it("Cap bei 9 gilt auch mit KO-Volltreffern", () => {
+    const koMatches: MatchLite[] = ["r32-1", "r16-1", "qf-1", "sf-1"].map((id, i) => ({
+      id,
+      round: ["r32", "r16", "qf", "sf"][i] as MatchLite["round"],
+      match_date: `2026-07-${String(i + 1).padStart(2, "0")}T18:00:00Z`,
+      result_1: 1,
+      result_2: 0,
+    }));
+    const tips: TipLite[] = [
+      ...sixGroupMatchesPlayed.map((m) => ({
+        match_id: m.id,
+        profile_id: "m1",
+        points_earned: 4,
+      })),
+      ...koMatches.map((m) => ({
+        match_id: m.id,
+        profile_id: "m1",
+        points_earned: 4,
+      })),
+    ];
+    expect(
+      tilesUnlocked("m1", [...sixGroupMatchesPlayed, ...koMatches], tips),
+    ).toBe(9);
   });
 
   it("ignoriert Tipps von Drittprofilen", () => {

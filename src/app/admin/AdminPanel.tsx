@@ -8,6 +8,7 @@ import {
   Dice5,
   Lock,
   Menu,
+  Pencil,
   Plus,
   Trash2,
   Upload,
@@ -15,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { WM2026_TEAMS } from "@/lib/teams-wm2026";
+import { KO_BRACKET, koGroupName, koMatchLabel, type KoMatch } from "@/lib/wm2026-ko";
 
 /* =========================================================================
    AdminPanel — Foto-Flow Variante
@@ -1112,7 +1114,7 @@ function MatchesSection({
       <div className="section-head">
         <span className="kicker">Spiele · {matches.length}</span>
       </div>
-      <NewMatchForm onCreated={onChange} />
+      <NewMatchForm matches={matches} onCreated={onChange} />
       <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 16 }}>
         {ROUND_ORDER.filter((r) => grouped.has(r)).map((r) => (
           <div key={r}>
@@ -1141,6 +1143,7 @@ function MatchesSection({
 }
 
 function MatchCard({ match, onChange }: { match: Match; onChange: () => void }) {
+  const [editing, setEditing] = useState(false);
   const [r1, setR1] = useState<string>(match.result_1 == null ? "" : String(match.result_1));
   const [r2, setR2] = useState<string>(match.result_2 == null ? "" : String(match.result_2));
   const [savingResult, setSavingResult] = useState(false);
@@ -1173,27 +1176,49 @@ function MatchCard({ match, onChange }: { match: Match; onChange: () => void }) 
 
   return (
     <div className="card pad" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {/* Kopf: Datum + Stadion + Gruppe */}
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--fg4)" }}>
+      {/* Kopf: Datum + Stadion + Gruppe + Bearbeiten */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: "var(--fg4)" }}>
         <span>{fmtDateTime(match.match_date)}</span>
-        <span>{match.group_name ?? ""}</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          {match.group_name ?? ""}
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Spiel bearbeiten"
+            title="Spiel bearbeiten (Teams, Datum, Stadion)"
+            onClick={() => setEditing((v) => !v)}
+            style={{ width: 26, height: 26 }}
+          >
+            {editing ? <X size={13} /> : <Pencil size={13} />}
+          </button>
+        </span>
       </div>
-      {match.stadium && (
+      {match.stadium && !editing && (
         <div style={{ fontSize: 11, color: "var(--fg4)" }}>📍 {match.stadium}</div>
       )}
 
-      {/* Mannschaften */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="flag" style={{ fontSize: 24 }}>{match.flag_1}</span>
-          <span style={{ fontSize: 14, color: "var(--fg1)" }}>{match.team_1}</span>
+      {editing ? (
+        <EditMatchForm
+          match={match}
+          onSaved={() => {
+            setEditing(false);
+            onChange();
+          }}
+        />
+      ) : (
+        /* Mannschaften */
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="flag" style={{ fontSize: 24 }}>{match.flag_1}</span>
+            <span style={{ fontSize: 14, color: "var(--fg1)" }}>{match.team_1}</span>
+          </div>
+          <span style={{ color: "var(--fg4)", fontSize: 13 }}>vs</span>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
+            <span style={{ fontSize: 14, color: "var(--fg1)" }}>{match.team_2}</span>
+            <span className="flag" style={{ fontSize: 24 }}>{match.flag_2}</span>
+          </div>
         </div>
-        <span style={{ color: "var(--fg4)", fontSize: 13 }}>vs</span>
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end" }}>
-          <span style={{ fontSize: 14, color: "var(--fg1)" }}>{match.team_2}</span>
-          <span className="flag" style={{ fontSize: 24 }}>{match.flag_2}</span>
-        </div>
-      </div>
+      )}
 
       {/* Ergebnis-Block — sauber abgesetzt (#24) */}
       <div
@@ -1250,7 +1275,143 @@ function MatchCard({ match, onChange }: { match: Match; onChange: () => void }) 
   );
 }
 
-function NewMatchForm({ onCreated }: { onCreated: () => void }) {
+/**
+ * Inline-Bearbeitung eines Spiels (Teams, Anstoß, Stadion) via PATCH.
+ * Damit trägt der Admin z. B. KO-Paarungen ein, sobald sie feststehen,
+ * oder korrigiert Anstoßzeiten. locked_at zieht der DB-Trigger nach.
+ */
+function EditMatchForm({ match, onSaved }: { match: Match; onSaved: () => void }) {
+  const [t1, setT1] = useState(match.team_1);
+  const [t2, setT2] = useState(match.team_2);
+  const [f1, setF1] = useState(match.flag_1 ?? "");
+  const [f2, setF2] = useState(match.flag_2 ?? "");
+  const [date, setDate] = useState(toDatetimeLocal(match.match_date));
+  const [stadium, setStadium] = useState(match.stadium ?? "");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  function fillTeam(slot: 1 | 2, name: string) {
+    const t = WM2026_TEAMS.find((x) => x.name === name);
+    if (slot === 1) {
+      setT1(name);
+      setF1(t?.flag ?? "");
+    } else {
+      setT2(name);
+      setF2(t?.flag ?? "");
+    }
+  }
+
+  async function save() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/matches/${match.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          team_1: t1.trim(),
+          team_2: t2.trim(),
+          flag_1: f1.trim() || "🏳️",
+          flag_2: f2.trim() || "🏳️",
+          match_date: fromDatetimeLocal(date),
+          stadium: stadium.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setErr(j.error ?? "Speichern fehlgeschlagen");
+        return;
+      }
+      onSaved();
+    } catch {
+      setErr("Netzwerkfehler");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function teamSelect(slot: 1 | 2, value: string) {
+    return (
+      <select
+        className="field-input"
+        value={value}
+        onChange={(e) => fillTeam(slot, e.target.value)}
+        style={{ flex: 1 }}
+      >
+        <option value="">— Mannschaft {slot} —</option>
+        {WM2026_TEAMS.map((t) => (
+          <option key={t.name} value={t.name}>
+            {t.flag} {t.name}
+          </option>
+        ))}
+        {/* Bestehender Wert außerhalb der Teilnehmer-Liste (z. B. Platzhalter) */}
+        {value && !WM2026_TEAMS.some((t) => t.name === value) && (
+          <option value={value}>{value}</option>
+        )}
+      </select>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", gap: 8 }}>
+        {teamSelect(1, t1)}
+        <input
+          className="field-input"
+          placeholder="🏳️"
+          value={f1}
+          onChange={(e) => setF1(e.target.value)}
+          maxLength={8}
+          style={{ width: 70, textAlign: "center" }}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        {teamSelect(2, t2)}
+        <input
+          className="field-input"
+          placeholder="🏳️"
+          value={f2}
+          onChange={(e) => setF2(e.target.value)}
+          maxLength={8}
+          style={{ width: 70, textAlign: "center" }}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          type="datetime-local"
+          className="field-input"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          style={{ flex: 1 }}
+        />
+        <input
+          className="field-input"
+          placeholder="Stadion"
+          value={stadium}
+          onChange={(e) => setStadium(e.target.value)}
+          maxLength={80}
+          style={{ flex: 1 }}
+        />
+      </div>
+      {err && <p style={{ color: "var(--loss)", fontSize: 13, margin: 0 }}>{err}</p>}
+      <button
+        className="btn btn-primary"
+        onClick={save}
+        disabled={busy || !t1.trim() || !t2.trim() || !date}
+      >
+        {busy ? "Speichere…" : "Änderungen speichern"}
+      </button>
+    </div>
+  );
+}
+
+function NewMatchForm({
+  matches,
+  onCreated,
+}: {
+  matches: Match[];
+  onCreated: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [group, setGroup] = useState("");
   const [round, setRound] = useState<Match["round"]>("group");
@@ -1260,8 +1421,27 @@ function NewMatchForm({ onCreated }: { onCreated: () => void }) {
   const [f2, setF2] = useState("");
   const [date, setDate] = useState(toDatetimeLocal(new Date().toISOString()));
   const [stadium, setStadium] = useState("");
+  const [koTemplate, setKoTemplate] = useState<KoMatch | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // KO-Spiele, die noch nicht angelegt sind (Abgleich über group_name "Spiel <Nr>").
+  const openKoTemplates = useMemo(() => {
+    const created = new Set(matches.map((m) => m.group_name));
+    return KO_BRACKET.filter((k) => !created.has(koGroupName(k.match_no)));
+  }, [matches]);
+
+  function pickKoTemplate(matchNoStr: string) {
+    const k = openKoTemplates.find((x) => String(x.match_no) === matchNoStr) ?? null;
+    setKoTemplate(k);
+    if (!k) return;
+    // Runde, Datum, Stadion und Spielnummer aus dem offiziellen Spielplan —
+    // der Admin wählt nur noch die beiden Teams.
+    setRound(k.round);
+    setGroup(koGroupName(k.match_no));
+    setDate(toDatetimeLocal(k.kickoff));
+    setStadium(k.stadium);
+  }
 
   function fillTeam(slot: 1 | 2, name: string) {
     const t = WM2026_TEAMS.find((x) => x.name === name);
@@ -1298,6 +1478,7 @@ function NewMatchForm({ onCreated }: { onCreated: () => void }) {
         return;
       }
       setGroup(""); setT1(""); setT2(""); setF1(""); setF2(""); setStadium("");
+      setKoTemplate(null);
       setOpen(false);
       onCreated();
     } finally {
@@ -1319,6 +1500,28 @@ function NewMatchForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <div className="card pad" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* Offizieller KO-Spielplan als Vorlage: füllt Runde/Datum/Stadion vor. */}
+      <label className="kicker">KO-Spielplan-Vorlage (optional)</label>
+      <select
+        className="field-input"
+        value={koTemplate ? String(koTemplate.match_no) : ""}
+        onChange={(e) => pickKoTemplate(e.target.value)}
+      >
+        <option value="">— Spiel manuell anlegen —</option>
+        {openKoTemplates.map((k) => (
+          <option key={k.match_no} value={k.match_no}>
+            {koMatchLabel(k)} · {fmtDateTime(k.kickoff)}
+          </option>
+        ))}
+      </select>
+      {koTemplate && (
+        <p className="t-small" style={{ margin: 0, color: "var(--fg3, #888)" }}>
+          Laut Spielplan: <strong>{koTemplate.slot_1}</strong> gegen{" "}
+          <strong>{koTemplate.slot_2}</strong> · 📍 {koTemplate.stadium}.
+          Wähle unten die beiden Teams, sobald sie feststehen.
+        </p>
+      )}
+
       <div style={{ display: "flex", gap: 8 }}>
         <input
           className="field-input"

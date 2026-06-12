@@ -32,15 +32,17 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
   });
   const [champion, setChampion] = useState<string>(initial.championTip ?? "");
   const [savedChampion, setSavedChampion] = useState<boolean>(!!initial.championTip);
+  // Der Weltmeister-Tipp ist einmalig & final (DB-Trigger) — daher KEIN
+  // Debounce-Autosave, sondern expliziter Button mit Bestätigung.
+  const [championFinal, setChampionFinal] = useState<boolean>(initial.championAlreadySet);
+  const [championBusy, setChampionBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Pro Match-ID ein Debounce-Timer, damit +/− Klicks gebündelt werden.
   const matchTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const championTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Noch nicht persistierte Tipps — wird beim Tab-Close per sendBeacon geflusht.
   const pending = useRef<Map<string, { tip_1: number; tip_2: number }>>(new Map());
-  const pendingChampion = useRef<string | null>(null);
   const lastToastAt = useRef<number>(0);
 
   // Bei Unmount alle Timer aufräumen.
@@ -48,7 +50,6 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
     const timers = matchTimers.current;
     return () => {
       for (const h of timers.values()) clearTimeout(h);
-      if (championTimer.current) clearTimeout(championTimer.current);
     };
   }, []);
 
@@ -61,10 +62,8 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
         tip_1: v.tip_1,
         tip_2: v.tip_2,
       }));
-      const champion = pendingChampion.current;
-      if (tips.length === 0 && !champion) return;
-      const body: { tips: typeof tips; champion?: string } = { tips };
-      if (champion) body.champion = champion;
+      if (tips.length === 0) return;
+      const body: { tips: typeof tips } = { tips };
       try {
         const blob = new Blob([JSON.stringify(body)], { type: "application/json" });
         navigator.sendBeacon("/api/tips/bulk", blob);
@@ -149,33 +148,31 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
     }
   }
 
-  function setChampionDebounced(name: string) {
-    setChampion(name);
-    setSavedChampion(false);
-    if (initial.championLocked || initial.championAlreadySet) return;
-    pendingChampion.current = name || null;
-    if (championTimer.current) clearTimeout(championTimer.current);
-    championTimer.current = setTimeout(() => saveChampion(name), SAVE_DEBOUNCE_MS);
-  }
-
-  async function saveChampion(name: string) {
-    if (!name) return;
+  async function confirmAndSaveChampion() {
+    if (!champion || championBusy || championFinal || initial.championLocked) return;
+    const sure = window.confirm(
+      `${champion} als deinen Weltmeister setzen?\n\nAchtung: Der Tipp ist EINMALIG und kann danach nicht mehr geändert werden.`,
+    );
+    if (!sure) return;
+    setChampionBusy(true);
     try {
       const res = await fetch("/api/tips/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tips: [], champion: name }),
+        body: JSON.stringify({ tips: [], champion }),
       });
       const json = await res.json();
       if (res.ok && json.champion?.ok) {
         setSavedChampion(true);
-        pendingChampion.current = null;
+        setChampionFinal(true);
         showToast("Weltmeister-Tipp gespeichert");
       } else {
         showToast(json.champion?.error ?? "Weltmeister-Tipp fehlgeschlagen");
       }
     } catch {
       showToast("Netzwerkfehler");
+    } finally {
+      setChampionBusy(false);
     }
   }
 
@@ -205,8 +202,11 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
           </div>
           <select
             value={champion}
-            onChange={(e) => setChampionDebounced(e.target.value)}
-            disabled={initial.championLocked || initial.championAlreadySet}
+            onChange={(e) => {
+              setChampion(e.target.value);
+              setSavedChampion(false);
+            }}
+            disabled={initial.championLocked || championFinal}
           >
             <option value="">– wähle ein Team –</option>
             {WM2026_TEAMS.map((t) => (
@@ -214,14 +214,29 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
                 {t.flag} {t.name}
               </option>
             ))}
+            {/* Bereits gesetzter Tipp auf ein Team, das nicht (mehr) in der
+                Liste steht — sonst zeigt das Select fälschlich den Platzhalter. */}
+            {champion && !WM2026_TEAMS.some((t) => t.name === champion) && (
+              <option value={champion}>{champion}</option>
+            )}
           </select>
+          {!championFinal && !initial.championLocked && (
+            <button
+              className="btn btn-primary"
+              style={{ marginTop: 10 }}
+              onClick={confirmAndSaveChampion}
+              disabled={!champion || championBusy}
+            >
+              {championBusy ? "Speichere…" : "Weltmeister final setzen"}
+            </button>
+          )}
           <p className="t-small" style={{ marginTop: 8 }}>
-            {initial.championAlreadySet
+            {championFinal
               ? "Dein Weltmeister-Tipp ist final — kann nicht mehr geändert werden."
               : initial.championLocked
               ? "Sperrfrist überschritten — dein Tipp ist fix."
               : initial.championLockAt
-              ? `Du kannst deinen Tipp einmalig bis ${new Date(initial.championLockAt).toLocaleString("de-DE")} setzen.`
+              ? `Du kannst deinen Tipp einmalig bis ${new Date(initial.championLockAt).toLocaleString("de-DE")} setzen — danach ist er final.`
               : "Du kannst deinen Tipp einmalig setzen — Sperrfrist beginnt mit den KO-Spielen."}
           </p>
           {savedChampion && champion && (

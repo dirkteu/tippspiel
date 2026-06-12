@@ -112,8 +112,9 @@ docker compose logs -f nginx
 - 6 Gruppenspiele der **Deutschen Gruppe** + komplette Endrunde.
 - **5-Min-Sperrfrist** vor Anpfiff. Danach hart gesperrt (DB-Trigger).
 - **Punkte:** 4 (exakt) · 3 (Tordiff) · 2 (Tendenz) · 0.
-- **Weltmeister-Bonus:** +10 Punkte für richtigen Tipp. Sperrfrist = Anpfiff Eröffnungsspiel.
-- **Volltreffer** (≥3 Pkt) deckt eine Kachel auf. K.o.-Runden bringen Bonus-Kacheln.
+- **Weltmeister-Bonus:** +10 Punkte für richtigen Tipp. Einmalig & final; Sperrfrist = 5 Min vor dem ersten K.o.-Spiel (28.06.2026).
+- **K.o.-Spiele:** Es zählt das Ergebnis nach 90 Minuten (Verlängerung/Elfmeterschießen zählen nicht).
+- **Volltreffer** (≥3 Pkt) deckt eine Bonus-Kachel auf — in Gruppen- UND K.o.-Spielen.
 - **Anonym:** alle Ansichten zeigen nur Pseudonyme und Team-Namen.
 
 ## Admin
