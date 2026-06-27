@@ -236,7 +236,7 @@ export function TippsClient({ initial }: { initial: TippsInitial }) {
               : initial.championLocked
               ? "Sperrfrist überschritten — dein Tipp ist fix."
               : initial.championLockAt
-              ? `Du kannst deinen Tipp einmalig bis ${new Date(initial.championLockAt).toLocaleString("de-DE")} setzen — danach ist er final.`
+              ? `Du kannst deinen Tipp einmalig bis ${new Date(initial.championLockAt).toLocaleString("de-DE", { timeZone: "Europe/Berlin" })} Uhr setzen — danach ist er final.`
               : "Du kannst deinen Tipp einmalig setzen — Sperrfrist beginnt mit den KO-Spielen."}
           </p>
           {savedChampion && champion && (

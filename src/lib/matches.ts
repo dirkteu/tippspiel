@@ -29,8 +29,8 @@ const ROUND_LABEL: Record<MatchRow["round"], string> = {
 export function roundLabel(m: Pick<MatchRow, "round" | "group_name" | "match_date">): string {
   const base = m.round === "group" ? m.group_name : ROUND_LABEL[m.round];
   const d = new Date(m.match_date);
-  const date = d.toLocaleDateString("de-DE", { day: "numeric", month: "long" });
-  const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const date = d.toLocaleDateString("de-DE", { day: "numeric", month: "long", timeZone: "Europe/Berlin" });
+  const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
   return `${base} · ${date} · ${time}`;
 }
 
@@ -41,8 +41,8 @@ export function matchHeading(m: Pick<MatchRow, "round" | "group_name" | "match_d
 } {
   const primary = m.round === "group" ? (m.group_name ?? "") : ROUND_LABEL[m.round];
   const d = new Date(m.match_date);
-  const date = d.toLocaleDateString("de-DE", { day: "numeric", month: "long" });
-  const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const date = d.toLocaleDateString("de-DE", { day: "numeric", month: "long", timeZone: "Europe/Berlin" });
+  const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
   return { meta_primary: primary, meta_secondary: `${date} · ${time} Uhr` };
 }
 
