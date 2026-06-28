@@ -52,20 +52,29 @@ for (const m of koSrc.matchAll(
   KO[Number(m[1])] = { round: m[2], kickoff: m[3], stadium: m[4] };
 }
 
-// ---- Phase 1: feststehende Paarungen (slot_1 zuerst, gem. KO_BRACKET) ----
+// ---- Paarungen (slot_1 zuerst, gem. KO_BRACKET) ----
 const PAIRINGS = {
+  // Phase 1 (27.06.): bereits feststehende Paarungen
   73: ["Südafrika", "Kanada"], //            2.A – 2.B
-  74: ["Deutschland", "Paraguay"], //        1.E – bester Gruppendritter
+  74: ["Deutschland", "Paraguay"], //        1.E – 3. Gruppe D
   75: ["Niederlande", "Marokko"], //         1.F – 2.C
   76: ["Brasilien", "Japan"], //             1.C – 2.F
-  77: ["Frankreich", "Schweden"], //         1.I – bester Gruppendritter
+  77: ["Frankreich", "Schweden"], //         1.I – 3. Gruppe F
   78: ["Elfenbeinküste", "Norwegen"], //     2.E – 2.I
-  81: ["USA", "Bosnien-Herzegowina"], //     1.D – bester Gruppendritter
+  81: ["USA", "Bosnien-Herzegowina"], //     1.D – 3. Gruppe B
   86: ["Argentinien", "Kap Verde"], //       1.J – 2.H
   88: ["Australien", "Ägypten"], //          2.D – 2.G
+  // Phase 2 (nach Abschluss der Gruppenphase): restliche Drittplatzierten-Slots
+  79: ["Mexiko", "Ecuador"], //              1.A – 3. Gruppe E
+  80: ["England", "DR Kongo"], //            1.L – 3. Gruppe K
+  82: ["Belgien", "Senegal"], //             1.G – 3. Gruppe I
+  83: ["Portugal", "Kroatien"], //           2.K – 2.L
+  84: ["Spanien", "Österreich"], //          1.H – 2.J
+  85: ["Schweiz", "Algerien"], //            1.B – 3. Gruppe J
+  87: ["Kolumbien", "Ghana"], //             1.K – 3. Gruppe L
 };
 
-console.log("Lege feststehende Sechzehntelfinal-Spiele an (Phase 1) …");
+console.log("Lege Sechzehntelfinal-Spiele an …");
 let created = 0;
 let skipped = 0;
 for (const [noStr, [team_1, team_2]] of Object.entries(PAIRINGS)) {
@@ -111,6 +120,4 @@ for (const [noStr, [team_1, team_2]] of Object.entries(PAIRINGS)) {
 }
 
 console.log(`\nFertig. ${created} angelegt, ${skipped} übersprungen.`);
-console.log(
-  "Offen (Phase 2): Spiele 79, 80, 82, 83, 84, 85, 87 — sobald Gruppen + beste Dritte feststehen.",
-);
+console.log(`Insgesamt definiert: ${Object.keys(PAIRINGS).length}/16 Sechzehntelfinal-Spiele.`);
