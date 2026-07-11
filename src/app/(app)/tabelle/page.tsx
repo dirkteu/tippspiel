@@ -1,7 +1,7 @@
 import { AppBar } from "@/components/primitives/AppBar";
 import { getSession } from "@/lib/auth";
 import { supabaseService } from "@/lib/supabase/server";
-import { fetchAllMatches, fetchTeamMemberIds, fetchTipsForTeam } from "@/lib/matches";
+import { fetchAllMatches, fetchAllTips, fetchTeamMemberIds, fetchTipsForTeam } from "@/lib/matches";
 import { tilesUnlocked } from "@/lib/tiles";
 
 interface TeamRanking {
@@ -56,14 +56,14 @@ export default async function TabellePage() {
   const [
     { data: teams },
     { data: profiles },
-    { data: tips },
+    tips,
     { data: champTips },
     allMatches,
     teamTips,
   ] = await Promise.all([
     sb.from("teams").select("id,team_name"),
     sb.from("profiles").select("id,team_id,username,gender,joined_at"),
-    sb.from("tips").select("profile_id,match_id,points_earned"),
+    fetchAllTips(),
     sb.from("champion_tips").select("profile_id,points_earned"),
     fetchAllMatches(),
     fetchTipsForTeam(memberIds),
@@ -98,7 +98,7 @@ export default async function TabellePage() {
     if (!teamId) continue;
     const cur = pointsByTeam.get(teamId) ?? { total: 0, vt: 0 };
     cur.total += t.points_earned;
-    if (t.points_earned >= 3) cur.vt += 1;
+    if (t.points_earned === 4) cur.vt += 1;
     pointsByTeam.set(teamId, cur);
   }
   for (const c of champTips ?? []) {

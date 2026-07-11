@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { AppBar } from "@/components/primitives/AppBar";
 import { getSession } from "@/lib/auth";
 import { supabaseService } from "@/lib/supabase/server";
-import { fetchAllMatches, fetchTeamMemberIds, fetchTipsForTeam } from "@/lib/matches";
+import { fetchAllMatches, fetchAllTips, fetchTeamMemberIds, fetchTipsForTeam } from "@/lib/matches";
 import { tilesUnlocked } from "@/lib/tiles";
 import { LogoutItem } from "./LogoutItem";
 
@@ -25,7 +25,7 @@ export default async function ProfilPage() {
 
   const myPoints = (tipsResp.data ?? []).reduce((s, t) => s + t.points_earned, 0)
     + (champResp.data?.points_earned ?? 0);
-  const volltreffer = (tipsResp.data ?? []).filter((t) => t.points_earned >= 3).length;
+  const volltreffer = (tipsResp.data ?? []).filter((t) => t.points_earned === 4).length;
 
   const tilesOpen = tilesUnlocked(
     session.profile.id,
@@ -45,7 +45,7 @@ export default async function ProfilPage() {
 
   // Rang berechnen (über Team)
   const { data: allProfiles } = await sb.from("profiles").select("id,team_id");
-  const { data: allTips } = await sb.from("tips").select("profile_id,points_earned");
+  const allTips = await fetchAllTips();
   const { data: allChamp } = await sb.from("champion_tips").select("profile_id,points_earned");
   const profToTeam = new Map<string, string>();
   for (const p of allProfiles ?? []) profToTeam.set(p.id, p.team_id);

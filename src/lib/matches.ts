@@ -77,6 +77,31 @@ export async function fetchTipsForTeam(teamMemberIds: string[]) {
   return data ?? [];
 }
 
+/**
+ * Alle Tipps (paginiert). Ein einzelnes select() ist bei PostgREST auf 1000
+ * Zeilen (max-rows) gedeckelt — bei mehr Tipps fiele die Punktesumme in den
+ * Ranglisten zu niedrig aus. Deshalb blockweise über .range() alles holen.
+ */
+export async function fetchAllTips(): Promise<
+  { profile_id: string; match_id: string; points_earned: number }[]
+> {
+  const sb = supabaseService();
+  const pageSize = 1000;
+  const all: { profile_id: string; match_id: string; points_earned: number }[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await sb
+      .from("tips")
+      .select("profile_id,match_id,points_earned")
+      .order("id", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+}
+
 export async function fetchTeamMemberIds(teamId: string): Promise<string[]> {
   const sb = supabaseService();
   const { data, error } = await sb
