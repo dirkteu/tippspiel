@@ -1,7 +1,7 @@
 import { AppBar } from "@/components/primitives/AppBar";
 import { getSession } from "@/lib/auth";
 import { supabaseService } from "@/lib/supabase/server";
-import { fetchAllMatches, fetchAllTips, fetchTeamMemberIds, fetchTipsForTeam } from "@/lib/matches";
+import { fetchAllMatches, fetchAllTips, fetchTeamMemberIds, fetchTipsForTeam, teamsRevealed } from "@/lib/matches";
 import { tilesUnlocked } from "@/lib/tiles";
 
 interface TeamRanking {
@@ -12,6 +12,8 @@ interface TeamRanking {
   /** Positionswechsel seit dem letzten beendeten Spiel. >0 = aufgestiegen, <0 = abgestiegen, 0 = gleich, null = noch keine Vergleichsdaten */
   tendency: number | null;
   is_me: boolean;
+  /** Nach der Team-Auflösung: die beiden Mitglieder (Foto + Pseudonym). */
+  members: { id: string; username: string }[];
 }
 
 interface IndividualRanking {
@@ -162,6 +164,18 @@ export default async function TabellePage() {
   const currentRankMap = buildRankMap(currentPointsMap);
   const previousRankMap = lastMatch ? buildRankMap(previousPointsMap) : null;
 
+  // Team-Auflösung: nach dem letzten gewerteten Halbfinale fällt das
+  // Geheimnis — die Tabelle zeigt dann Fotos + Pseudonyme der Mitglieder.
+  const revealed = teamsRevealed(allMatches);
+  const membersByTeam = new Map<string, { id: string; username: string }[]>();
+  if (revealed) {
+    for (const p of profiles ?? []) {
+      if (!p.team_id || !p.username) continue;
+      if (!membersByTeam.has(p.team_id)) membersByTeam.set(p.team_id, []);
+      membersByTeam.get(p.team_id)!.push({ id: p.id, username: p.username });
+    }
+  }
+
   const teamRanking: TeamRanking[] = (teams ?? [])
     .map((t) => {
       const stats = pointsByTeam.get(t.id) ?? { total: 0, vt: 0 };
@@ -174,9 +188,10 @@ export default async function TabellePage() {
         total_points: stats.total,
         volltreffer: stats.vt,
         tendency,
-        // Eigene Team-Zeile erst markieren, wenn alle 9 Kacheln offen sind.
-        // Sonst koennte man aus dem Highlight auf das eigene Team schliessen.
-        is_me: revealAllowed && t.id === session.team.id,
+        // Eigene Team-Zeile erst markieren, wenn alle 9 Kacheln offen sind —
+        // oder wenn die Teams ohnehin aufgelöst sind.
+        is_me: (revealAllowed || revealed) && t.id === session.team.id,
+        members: membersByTeam.get(t.id) ?? [],
       };
     })
     .sort((a, b) => b.total_points - a.total_points);
@@ -215,10 +230,37 @@ export default async function TabellePage() {
         {teamRanking.map((r, i) => (
           <div key={r.id} className={`lb-row${r.is_me ? " me" : ""}`}>
             <span className={`lb-rank ${RANK_CLS[i] ?? ""}`}>{i + 1}</span>
-            <span className="lb-av">🏁</span>
+            {r.members.length > 0 ? (
+              /* Aufgelöst: die beiden Selfies überlappend statt 🏁 */
+              <span style={{ display: "inline-flex", flexShrink: 0 }}>
+                {r.members.map((m, mi) => (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    key={m.id}
+                    src={`/api/avatar/team-member/${m.id}`}
+                    alt={m.username}
+                    width={34}
+                    height={34}
+                    style={{
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "2px solid var(--bg)",
+                      marginLeft: mi > 0 ? -10 : 0,
+                      position: "relative",
+                      zIndex: r.members.length - mi,
+                    }}
+                  />
+                ))}
+              </span>
+            ) : (
+              <span className="lb-av">🏁</span>
+            )}
             <div>
               <div className="lb-name">{r.team_name}</div>
               <div className="lb-sub">
+                {r.members.length > 0 && (
+                  <>{r.members.map((m) => m.username).join(" + ")} · </>
+                )}
                 {r.volltreffer} Volltreffer
                 {r.tendency !== null && (
                   <Tendency value={r.tendency} />

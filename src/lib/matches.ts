@@ -113,6 +113,19 @@ export async function fetchTeamMemberIds(teamId: string): Promise<string[]> {
 }
 
 /**
+ * Team-Auflösung: Das Geheimnis, wer mit wem ein Team bildet, fällt,
+ * sobald das letzte Halbfinale gewertet ist — d. h. es existiert
+ * mindestens ein sf-Spiel und keines davon ist ohne Ergebnis.
+ */
+export function teamsRevealed(
+  matches: Pick<MatchRow, "round" | "result_1" | "result_2">[],
+): boolean {
+  const sf = matches.filter((m) => m.round === "sf");
+  if (sf.length === 0) return false;
+  return sf.every((m) => m.result_1 != null && m.result_2 != null);
+}
+
+/**
  * Tipp ist gesperrt wenn entweder die Sperrfrist (5 Min vor Anpfiff)
  * überschritten ist ODER beide Ergebnisse bereits eingetragen sind.
  */
