@@ -22,6 +22,8 @@ interface IndividualRanking {
   gender: "m" | "f";
   total_points: number;
   is_me: boolean;
+  /** Klarname — wird erst nach der Team-Auflösung angezeigt. */
+  real_name: string | null;
 }
 
 const RANK_CLS = ["gold", "silver", "bronze"];
@@ -64,7 +66,7 @@ export default async function TabellePage() {
     teamTips,
   ] = await Promise.all([
     sb.from("teams").select("id,team_name"),
-    sb.from("profiles").select("id,team_id,username,gender,joined_at"),
+    sb.from("profiles").select("id,team_id,username,gender,joined_at,real_name"),
     fetchAllTips(),
     sb.from("champion_tips").select("profile_id,points_earned"),
     fetchAllMatches(),
@@ -213,6 +215,7 @@ export default async function TabellePage() {
       gender: p.gender as "m" | "f",
       total_points: pointsByPlayer.get(p.id) ?? 0,
       is_me: p.id === session.profile.id,
+      real_name: p.real_name ?? null,
     }))
     .sort((a, b) => b.total_points - a.total_points);
 
@@ -280,27 +283,54 @@ export default async function TabellePage() {
         title="Einzel · Gesamt"
         rows={individualRanking}
         currentId={session.profile.id}
+        revealed={revealed}
       />
     </div>
   );
 }
 
 /**
- * Zeigt nur den Ersten, die eigene Position (falls weder Erster noch Letzter)
- * und den Letzten. Trenner "…" wenn dazwischen eine Lücke besteht.
+ * Vor der Team-Auflösung: nur der Erste, die eigene Position (falls weder
+ * Erster noch Letzter) und der Letzte, mit "…"-Trennern — anonym genug,
+ * um das Team-Rätsel nicht zu verraten.
+ * Nach der Auflösung: die KOMPLETTE Liste, mit Foto + Klarnamen.
  */
 function IndividualBlock({
   title,
   rows,
   currentId,
+  revealed,
 }: {
   title: string;
   rows: IndividualRanking[];
   currentId: string;
+  revealed: boolean;
 }) {
   if (rows.length === 0) {
     return null;
   }
+
+  if (revealed) {
+    return (
+      <section>
+        <div className="section-head">
+          <span className="kicker">{title}</span>
+        </div>
+        <div className="lb">
+          {rows.map((r, i) => (
+            <RankRow
+              key={r.id}
+              place={i + 1}
+              row={r}
+              icon={rankIcon(i + 1, i === rows.length - 1 && rows.length > 1)}
+              revealed
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   const lastIdx = rows.length - 1;
   const myIdx = rows.findIndex((r) => r.id === currentId);
   const showMe = myIdx > 0 && myIdx < lastIdx;
@@ -343,17 +373,35 @@ function RankRow({
   place,
   row,
   icon,
+  revealed = false,
 }: {
   place: number;
   row: IndividualRanking;
   icon: string;
+  revealed?: boolean;
 }) {
   return (
     <div className={`lb-row${row.is_me ? " me" : ""}`}>
       <span className={`lb-rank ${RANK_CLS[place - 1] ?? ""}`}>{place}</span>
+      {revealed && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={`/api/avatar/team-member/${row.id}`}
+          alt={row.username}
+          width={34}
+          height={34}
+          style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+        />
+      )}
       <div>
-        <div className="lb-name">{row.username}</div>
-        {icon && <div className="lb-sub" style={{ fontSize: 14 }}>{icon}</div>}
+        <div className="lb-name">
+          {row.username}
+          {icon && <span style={{ marginLeft: 6, fontSize: 13 }}>{icon}</span>}
+        </div>
+        {revealed && row.real_name && (
+          <div className="lb-sub">{row.real_name}</div>
+        )}
+        {!revealed && icon && <div className="lb-sub" style={{ fontSize: 14 }}>{icon}</div>}
       </div>
       <span className="lb-pts">
         {row.total_points}
